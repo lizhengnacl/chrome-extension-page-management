@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>生成图标</title>
+  <style>
+    canvas {
+      display: block;
+      margin: 10px;
+      border: 1px solid #ccc;
+    }
+    .icons-container {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    button {
+      margin: 10px 0;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>生成插件图标</h1>
+  <button id="generateBtn">下载所有图标</button>
+  <div class="icons-container" id="iconsContainer"></div>
+
+  <script>
+    function generateIcon(size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#1a73e8');
+      gradient.addColorStop(1, '#34a853');
+      
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.fillStyle = 'white';
+      ctx.font = `bold ${size * 0.5}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('📑', size / 2, size / 2);
+      
+      return canvas;
+    }
+
+    function downloadCanvas(canvas, filename) {
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    const sizes = [16, 32, 48, 128];
+    const container = document.getElementById('iconsContainer');
+    const canvases = {};
+
+    sizes.forEach(size => {
+      const canvas = generateIcon(size);
+      canvases[size] = canvas;
+      const div = document.createElement('div');
+      div.style.display = 'flex';
+      div.style.flexDirection = 'column';
+      div.style.alignItems = 'center';
+      const label = document.createElement('span');
+      label.textContent = `${size}x${size}`;
+      div.appendChild(canvas);
+      div.appendChild(label);
+      container.appendChild(div);
+    });
+
+    document.getElementById('generateBtn').addEventListener('click', () => {
+      sizes.forEach(size => {
+        downloadCanvas(canvases[size], `icon${size}.png`);
+      });
+    });
+  </script>
+</body>
+</html>
