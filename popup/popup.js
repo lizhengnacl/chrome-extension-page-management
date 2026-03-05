@@ -1,6 +1,5 @@
-import { debounce, isValidUrl, showNotification } from '../js/utils.js';
+import { debounce, isValidUrl, showNotification, parseTags } from '../js/utils.js';
 import { PageManager } from '../js/page-manager.js';
-import { FolderManager } from '../js/folder-manager.js';
 import { Search } from '../js/search.js';
 import { ImportExport } from '../js/import-export.js';
 
@@ -23,12 +22,13 @@ const app = {
     this.bindEvents();
     await this.loadData();
     this.render();
+    if (window.feather) {
+      feather.replace();
+    }
   },
   
   cacheElements() {
     this.elements = {
-      addPageBtn: document.getElementById('addPageBtn'),
-      addFolderBtn: document.getElementById('addFolderBtn'),
       addCurrentPageBtn: document.getElementById('addCurrentPageBtn'),
       exportBtn: document.getElementById('exportBtn'),
       importBtn: document.getElementById('importBtn'),
@@ -38,19 +38,14 @@ const app = {
       sortOrderBtn: document.getElementById('sortOrderBtn'),
       pageList: document.getElementById('pageList'),
       addPageModal: document.getElementById('addPageModal'),
-      addFolderModal: document.getElementById('addFolderModal'),
       closeModalBtn: document.getElementById('closeModalBtn'),
-      closeFolderModalBtn: document.getElementById('closeFolderModalBtn'),
       cancelBtn: document.getElementById('cancelBtn'),
-      cancelFolderBtn: document.getElementById('cancelFolderBtn'),
       addPageForm: document.getElementById('addPageForm'),
-      addFolderForm: document.getElementById('addFolderForm'),
       pageUrl: document.getElementById('pageUrl'),
       pageTitle: document.getElementById('pageTitle'),
       pageFolder: document.getElementById('pageFolder'),
       pageTags: document.getElementById('pageTags'),
       pageNotes: document.getElementById('pageNotes'),
-      folderName: document.getElementById('folderName'),
       editingPageId: document.getElementById('editingPageId'),
       modalTitle: document.getElementById('modalTitle'),
       submitBtn: document.getElementById('submitBtn'),
@@ -62,18 +57,13 @@ const app = {
   },
   
   bindEvents() {
-    this.elements.addPageBtn.addEventListener('click', () => this.openAddPageModal());
-    this.elements.addFolderBtn.addEventListener('click', () => this.openAddFolderModal());
     this.elements.addCurrentPageBtn.addEventListener('click', () => this.addCurrentPage());
     this.elements.exportBtn.addEventListener('click', () => this.exportData());
     this.elements.importBtn.addEventListener('click', () => this.elements.importFileInput.click());
     this.elements.importFileInput.addEventListener('change', (e) => this.importData(e));
     this.elements.closeModalBtn.addEventListener('click', () => this.closeModal());
-    this.elements.closeFolderModalBtn.addEventListener('click', () => this.closeFolderModal());
     this.elements.cancelBtn.addEventListener('click', () => this.closeModal());
-    this.elements.cancelFolderBtn.addEventListener('click', () => this.closeFolderModal());
     this.elements.addPageForm.addEventListener('submit', (e) => this.handleSubmit(e));
-    this.elements.addFolderForm.addEventListener('submit', (e) => this.handleAddFolder(e));
     this.elements.searchInput.addEventListener('input', debounce((e) => this.handleSearch(e), 300));
     this.elements.sortBy.addEventListener('change', () => this.handleSortChange());
     this.elements.sortOrderBtn.addEventListener('click', () => this.toggleSortOrder());
@@ -121,12 +111,6 @@ const app = {
         this.closeModal();
       }
     });
-    
-    this.elements.addFolderModal.addEventListener('click', (e) => {
-      if (e.target === this.elements.addFolderModal) {
-        this.closeFolderModal();
-      }
-    });
   },
   
   async loadData() {
@@ -145,6 +129,9 @@ const app = {
     this.renderTagCloud();
     this.renderPageList(filteredPages);
     this.updateSortOrderBtn();
+    if (window.feather) {
+      feather.replace();
+    }
   },
   
   getFilteredPages() {
@@ -217,18 +204,18 @@ const app = {
         <div class="page-item-header">
           <div id="page-title-${page.id}" class="page-item-title">${this.escapeHtml(page.title)}</div>
           <div class="page-item-actions">
-            <button id="edit-btn-${page.id}" class="icon-btn" title="编辑">✏️</button>
-            <button id="delete-btn-${page.id}" class="icon-btn" title="删除">🗑️</button>
+            <button id="edit-btn-${page.id}" class="icon-btn" title="编辑"><i data-feather="edit-2"></i></button>
+            <button id="delete-btn-${page.id}" class="icon-btn" title="删除"><i data-feather="trash-2"></i></button>
           </div>
         </div>
         <div class="page-item-url">${this.escapeHtml(page.url)}</div>
         <div class="page-item-footer">
           <div class="page-item-meta">
-            ${folder ? `<span class="page-folder">📁 ${this.escapeHtml(folder.name)}</span>` : ''}
+            ${folder ? `<span class="page-folder"><i data-feather="folder" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:4px;"></i> ${this.escapeHtml(folder.name)}</span>` : ''}
             <div class="page-item-tags">${tagsHtml}</div>
           </div>
           <div class="page-stats">
-            <span class="page-visit-count">👁 ${page.visitCount}</span>
+            <span class="page-visit-count"><i data-feather="eye" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:4px;"></i> ${page.visitCount}</span>
           </div>
         </div>
       </div>
@@ -242,7 +229,11 @@ const app = {
   },
   
   updateSortOrderBtn() {
-    this.elements.sortOrderBtn.textContent = this.state.sortOrder === 'desc' ? '⬇️' : '⬆️';
+    const icon = this.state.sortOrder === 'desc' ? 'chevron-down' : 'chevron-up';
+    this.elements.sortOrderBtn.innerHTML = `<i data-feather="${icon}"></i>`;
+    if (window.feather) {
+      feather.replace();
+    }
   },
   
   updateFolderSelect() {
@@ -251,27 +242,6 @@ const app = {
       html += `<option value="${folder.id}">${this.escapeHtml(folder.name)}</option>`;
     });
     this.elements.pageFolder.innerHTML = html;
-  },
-  
-  async openAddPageModal() {
-    this.elements.modalTitle.textContent = '添加页面';
-    this.elements.submitBtn.textContent = '保存';
-    this.elements.editingPageId.value = '';
-    this.elements.addPageForm.reset();
-    this.updateFolderSelect();
-    
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab && tab.url && !tab.url.startsWith('chrome://')) {
-        this.elements.pageUrl.value = tab.url;
-        this.elements.pageTitle.value = tab.title || '';
-      }
-    } catch (error) {
-      console.error('获取当前标签页失败:', error);
-    }
-    
-    this.elements.addPageModal.classList.remove('hidden');
-    this.elements.pageUrl.focus();
   },
   
   async addCurrentPage() {
@@ -358,21 +328,10 @@ const app = {
     }
   },
   
-  openAddFolderModal() {
-    this.elements.addFolderForm.reset();
-    this.elements.addFolderModal.classList.remove('hidden');
-    this.elements.folderName.focus();
-  },
-  
   closeModal() {
     this.elements.addPageModal.classList.add('hidden');
     this.elements.addPageForm.reset();
     this.elements.editingPageId.value = '';
-  },
-  
-  closeFolderModal() {
-    this.elements.addFolderModal.classList.add('hidden');
-    this.elements.addFolderForm.reset();
   },
   
   async handleSubmit(e) {
@@ -390,15 +349,12 @@ const app = {
       return;
     }
     
-    const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : [];
+    const tags = parseTags(tagsInput);
     
     try {
       if (editingPageId) {
         await PageManager.updatePage(editingPageId, { url, title, folderId, tags, notes });
         showNotification('页面更新成功', 'success');
-      } else {
-        await PageManager.addPage({ url, title, folderId, tags, notes });
-        showNotification('页面添加成功', 'success');
       }
       this.closeModal();
       await this.loadData();
@@ -406,28 +362,6 @@ const app = {
     } catch (error) {
       console.error('操作失败:', error);
       showNotification('操作失败', 'error');
-    }
-  },
-  
-  async handleAddFolder(e) {
-    e.preventDefault();
-    
-    const name = this.elements.folderName.value.trim();
-    
-    if (!name) {
-      showNotification('请输入分组名称', 'error');
-      return;
-    }
-    
-    try {
-      await FolderManager.addFolder(name);
-      showNotification('分组创建成功', 'success');
-      this.closeFolderModal();
-      await this.loadData();
-      this.render();
-    } catch (error) {
-      console.error('创建分组失败:', error);
-      showNotification('创建分组失败', 'error');
     }
   },
   

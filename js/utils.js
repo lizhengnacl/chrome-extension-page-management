@@ -61,3 +61,13 @@ export function showNotification(message, type = 'info') {
     notification.remove();
   }, 3000);
 }
+
+export function parseTags(tagsString) {
+  if (!tagsString || typeof tagsString !== 'string') {
+    return [];
+  }
+  return tagsString.replace(/，/g, ',')
+    .split(',')
+    .map(tag => tag.trim())
+    .filter(tag => tag !== '');
+}
