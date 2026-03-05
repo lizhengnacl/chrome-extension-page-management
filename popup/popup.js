@@ -2,6 +2,7 @@ import { debounce, isValidUrl, showNotification, parseTags } from '../js/utils.j
 import { PageManager } from '../js/page-manager.js';
 import { Search } from '../js/search.js';
 import { ImportExport } from '../js/import-export.js';
+import { UIComponents } from '../js/ui-components.js';
 
 const app = {
   state: {
@@ -22,6 +23,7 @@ const app = {
     this.bindEvents();
     await this.loadData();
     this.render();
+    UIComponents.enhanceSearchInput(this.elements.searchInput);
     if (window.feather) {
       feather.replace();
     }
@@ -90,19 +92,21 @@ const app = {
       const pageItem = e.target.closest('.page-item');
       if (!pageItem) return;
       
-      const titleEl = e.target.closest('.page-item-title');
       const editBtn = e.target.closest('[id^="edit-btn-"]');
       const deleteBtn = e.target.closest('[id^="delete-btn-"]');
+      const iconBtn = e.target.closest('.icon-btn');
       
-      if (titleEl) {
-        const pageId = titleEl.id.replace('page-title-', '');
-        this.openPage(pageId);
-      } else if (editBtn) {
+      if (editBtn) {
         const pageId = editBtn.id.replace('edit-btn-', '');
         this.openEditPageModal(pageId);
       } else if (deleteBtn) {
         const pageId = deleteBtn.id.replace('delete-btn-', '');
         this.deletePage(pageId);
+      } else if (iconBtn) {
+        return;
+      } else {
+        const pageId = pageItem.querySelector('.page-item-title').id.replace('page-title-', '');
+        this.openPage(pageId);
       }
     });
     
@@ -262,6 +266,10 @@ const app = {
       showNotification('页面添加成功', 'success');
       await this.loadData();
       this.render();
+      
+      setTimeout(() => {
+        window.close();
+      }, 500);
     } catch (error) {
       console.error('添加当前页面失败:', error);
       showNotification('添加当前页面失败', 'error');

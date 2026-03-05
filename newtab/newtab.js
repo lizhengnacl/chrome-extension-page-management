@@ -8,6 +8,7 @@ import { ThumbnailManager } from '../js/thumbnail-manager.js';
 import { DragDrop } from '../js/drag-drop.js';
 import { Dashboard } from '../js/dashboard.js';
 import { SearchHistory } from '../js/search-history.js';
+import { UIComponents } from '../js/ui-components.js';
 
 const app = {
   state: {
@@ -35,6 +36,7 @@ const app = {
     this.bindEvents();
     await this.loadData();
     this.render();
+    UIComponents.enhanceSearchInput(this.elements.searchInput);
     if (window.feather) {
       feather.replace();
     }
