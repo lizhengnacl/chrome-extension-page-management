@@ -16,7 +16,8 @@ export const ThumbnailManager = {
   getFaviconUrl(url) {
     try {
       const urlObj = new URL(url);
-      return `${urlObj.protocol}//${urlObj.hostname}/favicon.ico`;
+      const domain = urlObj.hostname;
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
     } catch (error) {
       console.error('获取 favicon URL 失败:', error);
       return null;
@@ -67,10 +68,29 @@ export const ThumbnailManager = {
     const now = new Date().toISOString();
     
     const faviconUrl = this.getFaviconUrl(page.url);
+    let thumbnailUrl = null;
+    
+    try {
+      const encodedUrl = encodeURIComponent(page.url);
+      const apiUrl = `https://api.microlink.io/?url=${encodedUrl}&meta=true&screenshot=false`;
+      
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+      
+      if (data.status === 'success' && data.data) {
+        if (data.data.image && data.data.image.url) {
+          thumbnailUrl = data.data.image.url;
+        } else if (data.data.og && data.data.og.image) {
+          thumbnailUrl = data.data.og.image;
+        }
+      }
+    } catch (error) {
+      console.error('获取网页元数据失败:', error);
+    }
     
     return {
       pageId: page.id,
-      thumbnailUrl: null,
+      thumbnailUrl: thumbnailUrl,
       faviconUrl: faviconUrl,
       createdAt: now,
       updatedAt: now

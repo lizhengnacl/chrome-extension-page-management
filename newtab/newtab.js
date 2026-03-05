@@ -558,9 +558,9 @@ const app = {
 
     let thumbnailContent = '';
     if (thumbnail?.thumbnailUrl) {
-      thumbnailContent = `<img src="${thumbnail.thumbnailUrl}" alt="缩略图" loading="lazy">`;
+      thumbnailContent = `<img src="${thumbnail.thumbnailUrl}" alt="缩略图" loading="lazy" style="width:100%;height:100%;object-fit:cover;">`;
     } else if (faviconUrl) {
-      thumbnailContent = `<img src="${faviconUrl}" alt="Favicon" loading="lazy" style="width: 48px; height: 48px;">`;
+      thumbnailContent = `<img src="${faviconUrl}" alt="Favicon" loading="lazy">`;
     } else {
       thumbnailContent = `<i data-feather="file-text" style="width:48px;height:48px;opacity:0.5;"></i>`;
     }
