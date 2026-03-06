@@ -49,7 +49,7 @@ async function renderTags() {
     
     tags.forEach(tag => {
       const tagEl = document.createElement('span');
-      tagEl.className = 'tag';
+      tagEl.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm cursor-pointer transition-all duration-200 select-none hover:opacity-80 hover:scale-[1.02]';
       tagEl.dataset.tagId = tag.id;
       tagEl.style.backgroundColor = tag.color;
       tagEl.style.color = '#ffffff';
@@ -90,11 +90,11 @@ function toggleTag(tagId) {
     selectedTagIds.push(tagId);
   }
   
-  document.querySelectorAll('.tag').forEach(tagEl => {
+  document.querySelectorAll('#tagsContainer > span').forEach(tagEl => {
     if (selectedTagIds.includes(tagEl.dataset.tagId)) {
-      tagEl.classList.add('selected');
+      tagEl.classList.add('ring-2', 'ring-blue-500');
     } else {
-      tagEl.classList.remove('selected');
+      tagEl.classList.remove('ring-2', 'ring-blue-500');
     }
   });
 }
@@ -156,11 +156,16 @@ async function handleAddPage() {
 }
 
 function bindEvents() {
-  document.getElementById('addTagBtn').addEventListener('click', handleAddTag);
-  document.getElementById('newTagInput').addEventListener('keypress', (e) => {
+  const addTagBtn = document.getElementById('addTagBtn');
+  if (addTagBtn) addTagBtn.addEventListener('click', handleAddTag);
+  
+  const newTagInput = document.getElementById('newTagInput');
+  if (newTagInput) newTagInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
       handleAddTag();
     }
   });
-  document.getElementById('addPageBtn').addEventListener('click', handleAddPage);
+  
+  const addPageBtn = document.getElementById('addPageBtn');
+  if (addPageBtn) addPageBtn.addEventListener('click', handleAddPage);
 }

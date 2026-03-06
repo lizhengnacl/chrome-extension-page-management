@@ -98,32 +98,34 @@ function renderTags() {
   const container = document.getElementById('tagsList');
   
   if (state.tags.length === 0) {
-    container.innerHTML = '<p style="color: #6b7280; font-size: 14px;">暂无标签</p>';
+    container.innerHTML = '<p class="text-gray-500 text-sm">暂无标签</p>';
     return;
   }
   
   container.innerHTML = `
-    <div class="tag-item" style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-      <span class="filter-tag ${!state.selectedTagId ? 'active' : ''}" 
+    <div class="flex items-center gap-2 mb-2">
+      <span class="px-3.5 py-1.5 rounded-full text-sm cursor-pointer transition-all duration-200 select-none hover:opacity-80 hover:scale-[1.02] ${!state.selectedTagId ? 'ring-2 ring-gray-900' : ''}" 
             style="background: #e5e7eb; color: #374151;"
             data-tag-id="">全部</span>
     </div>
     ${state.tags.map(tag => `
-      <div class="tag-item" style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-        <span class="filter-tag ${state.selectedTagId === tag.id ? 'active' : ''}" 
+      <div class="flex items-center gap-2 mb-2">
+        <span class="px-3.5 py-1.5 rounded-full text-sm cursor-pointer transition-all duration-200 select-none hover:opacity-80 hover:scale-[1.02] ${state.selectedTagId === tag.id ? 'ring-2 ring-gray-900' : ''}" 
               style="background: ${tag.color}; color: white;"
               data-tag-id="${tag.id}">${tag.name}</span>
-        <button class="btn btn-sm btn-secondary edit-tag-btn" data-tag-id="${tag.id}" style="padding: 2px 8px; font-size: 12px;">编辑</button>
-        <button class="btn btn-sm btn-danger delete-tag-btn" data-tag-id="${tag.id}" style="padding: 2px 8px; font-size: 12px;">删除</button>
+        <button class="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200 edit-tag-btn" data-tag-id="${tag.id}">编辑</button>
+        <button class="px-2 py-1 bg-red-500 text-white rounded text-xs font-medium cursor-pointer hover:bg-red-600 transition-all duration-200 delete-tag-btn" data-tag-id="${tag.id}">删除</button>
       </div>
     `).join('')}
   `;
   
-  container.querySelectorAll('.filter-tag').forEach(el => {
-    el.addEventListener('click', () => {
-      state.selectedTagId = el.dataset.tagId || null;
-      renderAll();
-    });
+  container.querySelectorAll('[data-tag-id]').forEach(el => {
+    if (el.tagName === 'SPAN') {
+      el.addEventListener('click', () => {
+        state.selectedTagId = el.dataset.tagId || null;
+        renderAll();
+      });
+    }
   });
   
   container.querySelectorAll('.edit-tag-btn').forEach(el => {
@@ -152,11 +154,11 @@ function renderGroups() {
   
   if (ungroupedPages.length > 0) {
     html += `
-      <div class="group-item" data-group-id="">
-        <div class="group-header">
-          <span class="group-title">未分组</span>
+      <div class="bg-white rounded-xl p-5 shadow-sm" data-group-id="">
+        <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200">
+          <span class="text-lg font-semibold text-gray-900">未分组</span>
         </div>
-        <div class="pages-list" data-group-id="">
+        <div class="flex flex-col gap-2" data-group-id="">
           ${ungroupedPages.map(page => renderPageItem(page)).join('')}
         </div>
       </div>
@@ -176,18 +178,18 @@ function renderGroups() {
       }
       
       return `
-        <div class="group-item" data-group-id="${group.id}">
-          <div class="group-header">
-            <span class="group-title">${group.name}</span>
-            <div class="group-actions">
-              <button class="btn btn-sm btn-secondary open-group-btn" data-group-id="${group.id}">打开全部</button>
-              <button class="btn btn-sm btn-secondary edit-group-btn" data-group-id="${group.id}">编辑</button>
-              <button class="btn btn-sm btn-danger delete-group-btn" data-group-id="${group.id}">删除</button>
+        <div class="bg-white rounded-xl p-5 shadow-sm" data-group-id="${group.id}">
+          <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200">
+            <span class="text-lg font-semibold text-gray-900">${group.name}</span>
+            <div class="flex gap-2">
+              <button class="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200 open-group-btn" data-group-id="${group.id}">打开全部</button>
+              <button class="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200 edit-group-btn" data-group-id="${group.id}">编辑</button>
+              <button class="px-2 py-1 bg-red-500 text-white rounded text-xs font-medium cursor-pointer hover:bg-red-600 transition-all duration-200 delete-group-btn" data-group-id="${group.id}">删除</button>
             </div>
           </div>
-          <div class="pages-list" data-group-id="${group.id}">
+          <div class="flex flex-col gap-2" data-group-id="${group.id}">
             ${pages.length === 0 
-              ? '<p style="color: #6b7280; font-size: 14px; padding: 16px;">该分组暂无页面</p>'
+              ? '<p class="text-gray-500 text-sm p-4">该分组暂无页面</p>'
               : pages.map(page => renderPageItem(page)).join('')}
           </div>
         </div>
@@ -196,12 +198,12 @@ function renderGroups() {
   }
   
   if (html === '' && state.groups.length === 0) {
-    html = '<p style="color: #6b7280; font-size: 14px; padding: 40px; text-align: center;">暂无分组，点击上方按钮添加</p>';
+    html = '<p class="text-gray-500 text-sm p-10 text-center">暂无分组，点击上方按钮添加</p>';
   }
   
   container.innerHTML = html;
   
-  container.querySelectorAll('.page-item').forEach(el => {
+  container.querySelectorAll('[data-page-id]').forEach(el => {
     setupPageItemEvents(el);
   });
   
@@ -223,31 +225,31 @@ function renderPageItem(page, isFavorite = false) {
   const defaultFavicon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3QgeD0iNCIgeT0iNCIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNCIgZmlsbD0iI0UzRTRFNSIvPgo8cGF0aCBkPSJNMCA4QzAgNi4zNDMxNSAxLjM0MzE1IDUgMyA1SDI5QzMwLjY1NjkgNSAzMiA2LjM0MzE1IDMyIDhWMjRDMzIgMjUuNjU2OSAzMC42NTY5IDI3IDI5IDI3SDNIMUMxLjM0MzE1IDI3IDAgMjUuNjU2OSAwIDI0VjhaIiBmaWxsPSIjNUI3Rjk3Ii8+CjxwYXRoIGQ9Ik03IDExQzcgOS4zNDMxNSA4LjM0MzE1IDggMTAgOEgyMkMyMy42NTY5IDggMjUgOS4zNDMxNSAyNSAxMVYxOUMyNSAyMC42NTY5IDIzLjY1NjkgMjIgMjIgMjJIMTBDOC4zNDMxNSAyMiA3IDIwLjY1NjkgNyAxOVYxMVoiIGZpbGw9IiNGRkZGRkYiLz4KPC9zdmc+';
   
   return `
-    <div class="page-item" 
+    <div class="page-item flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" 
          data-page-id="${page.id}" 
          draggable="true">
-      <img src="${page.favicon || defaultFavicon}" alt="" class="favicon" data-default-favicon="${defaultFavicon}">
-      <div class="page-info">
-        <a href="${page.url}" target="_blank" class="page-title" style="text-decoration: none; color: inherit;">
+      <img src="${page.favicon || defaultFavicon}" alt="" class="w-6 h-6 rounded flex-shrink-0" data-default-favicon="${defaultFavicon}">
+      <div class="flex-1 min-w-0">
+        <a href="${page.url}" target="_blank" class="font-medium text-sm text-gray-900 mb-0.5 truncate block" style="text-decoration: none;">
           ${page.title}
         </a>
-        <div class="page-url">${page.url}</div>
+        <div class="text-xs text-gray-500 truncate">${page.url}</div>
         ${pageTags.length > 0 ? `
-          <div class="page-tags">
-            ${pageTags.map(tag => `<span class="page-tag" style="background: ${tag.color};">${tag.name}</span>`).join('')}
+          <div class="flex gap-1.5 flex-wrap mt-1">
+            ${pageTags.map(tag => `<span class="px-2 py-0.5 rounded-full text-xs text-white" style="background: ${tag.color};">${tag.name}</span>`).join('')}
           </div>
         ` : ''}
       </div>
-      <div class="page-actions">
-        <button class="page-action-btn favorite-btn ${page.isFavorite ? 'active' : ''}" 
+      <div class="flex gap-2 flex-shrink-0">
+        <button class="p-1.5 border-none bg-transparent cursor-pointer rounded text-xl hover:bg-gray-100 transition-colors duration-200 leading-none favorite-btn ${page.isFavorite ? 'text-amber-500' : ''}" 
                 data-page-id="${page.id}" title="常用">
           ⭐
         </button>
-        <button class="page-action-btn edit-page-btn" 
+        <button class="p-1.5 border-none bg-transparent cursor-pointer rounded text-xl hover:bg-gray-100 transition-colors duration-200 leading-none edit-page-btn" 
                 data-page-id="${page.id}" title="编辑">
           ✏️
         </button>
-        <button class="page-action-btn delete-page-btn" 
+        <button class="p-1.5 border-none bg-transparent cursor-pointer rounded text-xl hover:bg-gray-100 transition-colors duration-200 leading-none delete-page-btn" 
                 data-page-id="${page.id}" title="删除">
           🗑️
         </button>
@@ -258,7 +260,7 @@ function renderPageItem(page, isFavorite = false) {
 
 function setupPageItemEvents(el) {
   const pageId = el.dataset.pageId;
-  const faviconImg = el.querySelector('.favicon');
+  const faviconImg = el.querySelector('img');
   
   if (faviconImg) {
     faviconImg.addEventListener('error', function() {
@@ -269,45 +271,54 @@ function setupPageItemEvents(el) {
     });
   }
   
-  el.querySelector('.favorite-btn').addEventListener('click', (e) => {
-    e.preventDefault();
-    handleToggleFavorite(pageId);
-  });
+  const favoriteBtn = el.querySelector('.favorite-btn');
+  if (favoriteBtn) {
+    favoriteBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleToggleFavorite(pageId);
+    });
+  }
   
-  el.querySelector('.edit-page-btn').addEventListener('click', (e) => {
-    e.preventDefault();
-    openEditPageModal(pageId);
-  });
+  const editPageBtn = el.querySelector('.edit-page-btn');
+  if (editPageBtn) {
+    editPageBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openEditPageModal(pageId);
+    });
+  }
   
-  el.querySelector('.delete-page-btn').addEventListener('click', (e) => {
-    e.preventDefault();
-    handleDeletePage(pageId);
-  });
+  const deletePageBtn = el.querySelector('.delete-page-btn');
+  if (deletePageBtn) {
+    deletePageBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleDeletePage(pageId);
+    });
+  }
   
   el.addEventListener('dragstart', (e) => {
     state.draggedPageId = pageId;
-    el.classList.add('dragging');
+    el.classList.add('opacity-50');
   });
   
   el.addEventListener('dragend', () => {
-    el.classList.remove('dragging');
+    el.classList.remove('opacity-50');
     state.draggedPageId = null;
   });
   
   el.addEventListener('dragover', (e) => {
     e.preventDefault();
     if (state.draggedPageId && state.draggedPageId !== pageId) {
-      el.classList.add('drag-over');
+      el.classList.add('border-t-3', 'border-t-blue-500');
     }
   });
   
   el.addEventListener('dragleave', () => {
-    el.classList.remove('drag-over');
+    el.classList.remove('border-t-3', 'border-t-blue-500');
   });
   
   el.addEventListener('drop', async (e) => {
     e.preventDefault();
-    el.classList.remove('drag-over');
+    el.classList.remove('border-t-3', 'border-t-blue-500');
     if (state.draggedPageId && state.draggedPageId !== pageId) {
       await handleReorderPages(state.draggedPageId, pageId);
     }
@@ -412,13 +423,13 @@ async function handleDeleteGroup(groupId) {
 function openModal(title, contentHTML) {
   document.getElementById('modalTitle').textContent = title;
   document.getElementById('modalContent').innerHTML = contentHTML;
-  document.getElementById('modalOverlay').classList.add('active');
-  document.getElementById('modal').classList.add('active');
+  document.getElementById('modalOverlay').classList.remove('hidden');
+  document.getElementById('modal').classList.remove('hidden');
 }
 
 function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('active');
-  document.getElementById('modal').classList.remove('active');
+  document.getElementById('modalOverlay').classList.add('hidden');
+  document.getElementById('modal').classList.add('hidden');
   state.editingPageId = null;
   state.editingGroupId = null;
   state.editingTagId = null;
@@ -431,37 +442,40 @@ function openAddPageModal() {
   `;
   
   const tagOptions = state.tags.map(t => `
-    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+    <label class="flex items-center gap-2 mb-2">
       <input type="checkbox" value="${t.id}" class="tag-checkbox">
-      <span style="background: ${t.color}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">${t.name}</span>
+      <span class="px-2 py-0.5 rounded-full text-xs text-white" style="background: ${t.color};">${t.name}</span>
     </label>
   `).join('');
   
   openModal('添加页面', `
-    <div class="form-group">
-      <label>URL</label>
-      <input type="url" id="pageUrl" placeholder="https://example.com" required>
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1.5 text-gray-700">URL</label>
+      <input type="url" id="pageUrl" placeholder="https://example.com" required class="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:ring-opacity-20 transition-all duration-200">
     </div>
-    <div class="form-group">
-      <label>标题</label>
-      <input type="text" id="pageTitle" placeholder="页面标题" required>
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1.5 text-gray-700">标题</label>
+      <input type="text" id="pageTitle" placeholder="页面标题" required class="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:ring-opacity-20 transition-all duration-200">
     </div>
-    <div class="form-group">
-      <label>分组</label>
-      <select id="pageGroup">${groupOptions}</select>
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1.5 text-gray-700">分组</label>
+      <select id="pageGroup" class="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm bg-white cursor-pointer outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:ring-opacity-20 transition-all duration-200">${groupOptions}</select>
     </div>
-    <div class="form-group">
-      <label>标签</label>
-      <div>${tagOptions || '<p style="color: #6b7280; font-size: 14px;">暂无标签</p>'}</div>
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1.5 text-gray-700">标签</label>
+      <div>${tagOptions || '<p class="text-gray-500 text-sm">暂无标签</p>'}</div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" id="cancelModalBtn">取消</button>
-      <button class="btn btn-primary" id="savePageBtn">保存</button>
+    <div class="flex justify-end gap-3 pt-5 border-t border-gray-200">
+      <button class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200" id="cancelModalBtn">取消</button>
+      <button class="px-5 py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-600 transition-all duration-200" id="savePageBtn">保存</button>
     </div>
   `);
   
-  document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
-  document.getElementById('savePageBtn').addEventListener('click', handleSaveNewPage);
+  const cancelModalBtn = document.getElementById('cancelModalBtn');
+  if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
+  
+  const savePageBtn = document.getElementById('savePageBtn');
+  if (savePageBtn) savePageBtn.addEventListener('click', handleSaveNewPage);
 }
 
 async function handleSaveNewPage() {
@@ -510,37 +524,40 @@ function openEditPageModal(pageId) {
   `;
   
   const tagOptions = state.tags.map(t => `
-    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+    <label class="flex items-center gap-2 mb-2">
       <input type="checkbox" value="${t.id}" class="tag-checkbox" ${page.tags.includes(t.id) ? 'checked' : ''}>
-      <span style="background: ${t.color}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">${t.name}</span>
+      <span class="px-2 py-0.5 rounded-full text-xs text-white" style="background: ${t.color};">${t.name}</span>
     </label>
   `).join('');
   
   openModal('编辑页面', `
-    <div class="form-group">
-      <label>URL</label>
-      <input type="url" id="pageUrl" value="${page.url}" required>
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1.5 text-gray-700">URL</label>
+      <input type="url" id="pageUrl" value="${page.url}" required class="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:ring-opacity-20 transition-all duration-200">
     </div>
-    <div class="form-group">
-      <label>标题</label>
-      <input type="text" id="pageTitle" value="${page.title}" required>
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1.5 text-gray-700">标题</label>
+      <input type="text" id="pageTitle" value="${page.title}" required class="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:ring-opacity-20 transition-all duration-200">
     </div>
-    <div class="form-group">
-      <label>分组</label>
-      <select id="pageGroup">${groupOptions}</select>
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1.5 text-gray-700">分组</label>
+      <select id="pageGroup" class="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm bg-white cursor-pointer outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:ring-opacity-20 transition-all duration-200">${groupOptions}</select>
     </div>
-    <div class="form-group">
-      <label>标签</label>
-      <div>${tagOptions || '<p style="color: #6b7280; font-size: 14px;">暂无标签</p>'}</div>
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1.5 text-gray-700">标签</label>
+      <div>${tagOptions || '<p class="text-gray-500 text-sm">暂无标签</p>'}</div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" id="cancelModalBtn">取消</button>
-      <button class="btn btn-primary" id="savePageBtn">保存</button>
+    <div class="flex justify-end gap-3 pt-5 border-t border-gray-200">
+      <button class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200" id="cancelModalBtn">取消</button>
+      <button class="px-5 py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-600 transition-all duration-200" id="savePageBtn">保存</button>
     </div>
   `);
   
-  document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
-  document.getElementById('savePageBtn').addEventListener('click', handleSaveEditPage);
+  const cancelModalBtn = document.getElementById('cancelModalBtn');
+  if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
+  
+  const savePageBtn = document.getElementById('savePageBtn');
+  if (savePageBtn) savePageBtn.addEventListener('click', handleSaveEditPage);
 }
 
 async function handleSaveEditPage() {
@@ -575,18 +592,21 @@ async function handleSaveEditPage() {
 
 function openAddGroupModal() {
   openModal('添加分组', `
-    <div class="form-group">
-      <label>分组名称</label>
-      <input type="text" id="groupName" placeholder="输入分组名称" required>
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1.5 text-gray-700">分组名称</label>
+      <input type="text" id="groupName" placeholder="输入分组名称" required class="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:ring-opacity-20 transition-all duration-200">
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" id="cancelModalBtn">取消</button>
-      <button class="btn btn-primary" id="saveGroupBtn">保存</button>
+    <div class="flex justify-end gap-3 pt-5 border-t border-gray-200">
+      <button class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200" id="cancelModalBtn">取消</button>
+      <button class="px-5 py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-600 transition-all duration-200" id="saveGroupBtn">保存</button>
     </div>
   `);
   
-  document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
-  document.getElementById('saveGroupBtn').addEventListener('click', handleSaveNewGroup);
+  const cancelModalBtn = document.getElementById('cancelModalBtn');
+  if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
+  
+  const saveGroupBtn = document.getElementById('saveGroupBtn');
+  if (saveGroupBtn) saveGroupBtn.addEventListener('click', handleSaveNewGroup);
 }
 
 async function handleSaveNewGroup() {
@@ -617,18 +637,21 @@ function openEditGroupModal(groupId) {
   state.editingGroupId = groupId;
   
   openModal('编辑分组', `
-    <div class="form-group">
-      <label>分组名称</label>
-      <input type="text" id="groupName" value="${group.name}" required>
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1.5 text-gray-700">分组名称</label>
+      <input type="text" id="groupName" value="${group.name}" required class="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:ring-opacity-20 transition-all duration-200">
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" id="cancelModalBtn">取消</button>
-      <button class="btn btn-primary" id="saveGroupBtn">保存</button>
+    <div class="flex justify-end gap-3 pt-5 border-t border-gray-200">
+      <button class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200" id="cancelModalBtn">取消</button>
+      <button class="px-5 py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-600 transition-all duration-200" id="saveGroupBtn">保存</button>
     </div>
   `);
   
-  document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
-  document.getElementById('saveGroupBtn').addEventListener('click', handleSaveEditGroup);
+  const cancelModalBtn = document.getElementById('cancelModalBtn');
+  if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
+  
+  const saveGroupBtn = document.getElementById('saveGroupBtn');
+  if (saveGroupBtn) saveGroupBtn.addEventListener('click', handleSaveEditGroup);
 }
 
 async function handleSaveEditGroup() {
@@ -652,38 +675,46 @@ async function handleSaveEditGroup() {
 
 function openAddTagModal() {
   openModal('添加标签', `
-    <div class="form-group">
-      <label>标签名称</label>
-      <input type="text" id="tagName" placeholder="输入标签名称" required>
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1.5 text-gray-700">标签名称</label>
+      <input type="text" id="tagName" placeholder="输入标签名称" required class="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:ring-opacity-20 transition-all duration-200">
     </div>
-    <div class="form-group">
-      <label>标签颜色</label>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1.5 text-gray-700">标签颜色</label>
+      <div class="flex gap-2 flex-wrap">
         ${DEFAULT_TAG_COLORS.map(color => `
-          <label style="cursor: pointer;">
-            <input type="radio" name="tagColor" value="${color}" style="display: none;" ${color === DEFAULT_TAG_COLORS[0] ? 'checked' : ''}>
-            <span style="display: block; width: 32px; height: 32px; background: ${color}; border-radius: 50%; border: 3px solid transparent;"></span>
+          <label class="cursor-pointer">
+            <input type="radio" name="tagColor" value="${color}" class="hidden" ${color === DEFAULT_TAG_COLORS[0] ? 'checked' : ''}>
+            <span class="block w-8 h-8 rounded-full border-3 border-transparent" style="background: ${color};"></span>
           </label>
         `).join('')}
       </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" id="cancelModalBtn">取消</button>
-      <button class="btn btn-primary" id="saveTagBtn">保存</button>
+    <div class="flex justify-end gap-3 pt-5 border-t border-gray-200">
+      <button class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200" id="cancelModalBtn">取消</button>
+      <button class="px-5 py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-600 transition-all duration-200" id="saveTagBtn">保存</button>
     </div>
   `);
   
-  document.querySelectorAll('input[name="tagColor"]').forEach(radio => {
+  const tagColorRadios = document.querySelectorAll('input[name="tagColor"]');
+  tagColorRadios.forEach(radio => {
     radio.addEventListener('change', () => {
       document.querySelectorAll('input[name="tagColor"]').forEach(r => {
-        r.nextElementSibling.style.borderColor = r.checked ? '#111827' : 'transparent';
+        if (r.nextElementSibling) {
+          r.nextElementSibling.style.borderColor = r.checked ? '#111827' : 'transparent';
+        }
       });
     });
-    radio.nextElementSibling.style.borderColor = radio.checked ? '#111827' : 'transparent';
+    if (radio.nextElementSibling) {
+      radio.nextElementSibling.style.borderColor = radio.checked ? '#111827' : 'transparent';
+    }
   });
   
-  document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
-  document.getElementById('saveTagBtn').addEventListener('click', handleSaveNewTag);
+  const cancelModalBtn = document.getElementById('cancelModalBtn');
+  if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
+  
+  const saveTagBtn = document.getElementById('saveTagBtn');
+  if (saveTagBtn) saveTagBtn.addEventListener('click', handleSaveNewTag);
 }
 
 async function handleSaveNewTag() {
@@ -712,38 +743,46 @@ function openEditTagModal(tagId) {
   state.editingTagId = tagId;
   
   openModal('编辑标签', `
-    <div class="form-group">
-      <label>标签名称</label>
-      <input type="text" id="tagName" value="${tag.name}" required>
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1.5 text-gray-700">标签名称</label>
+      <input type="text" id="tagName" value="${tag.name}" required class="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:ring-opacity-20 transition-all duration-200">
     </div>
-    <div class="form-group">
-      <label>标签颜色</label>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1.5 text-gray-700">标签颜色</label>
+      <div class="flex gap-2 flex-wrap">
         ${DEFAULT_TAG_COLORS.map(color => `
-          <label style="cursor: pointer;">
-            <input type="radio" name="tagColor" value="${color}" style="display: none;" ${color === tag.color ? 'checked' : ''}>
-            <span style="display: block; width: 32px; height: 32px; background: ${color}; border-radius: 50%; border: 3px solid transparent;"></span>
+          <label class="cursor-pointer">
+            <input type="radio" name="tagColor" value="${color}" class="hidden" ${color === tag.color ? 'checked' : ''}>
+            <span class="block w-8 h-8 rounded-full border-3 border-transparent" style="background: ${color};"></span>
           </label>
         `).join('')}
       </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" id="cancelModalBtn">取消</button>
-      <button class="btn btn-primary" id="saveTagBtn">保存</button>
+    <div class="flex justify-end gap-3 pt-5 border-t border-gray-200">
+      <button class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200" id="cancelModalBtn">取消</button>
+      <button class="px-5 py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-600 transition-all duration-200" id="saveTagBtn">保存</button>
     </div>
   `);
   
-  document.querySelectorAll('input[name="tagColor"]').forEach(radio => {
+  const tagColorRadios = document.querySelectorAll('input[name="tagColor"]');
+  tagColorRadios.forEach(radio => {
     radio.addEventListener('change', () => {
       document.querySelectorAll('input[name="tagColor"]').forEach(r => {
-        r.nextElementSibling.style.borderColor = r.checked ? '#111827' : 'transparent';
+        if (r.nextElementSibling) {
+          r.nextElementSibling.style.borderColor = r.checked ? '#111827' : 'transparent';
+        }
       });
     });
-    radio.nextElementSibling.style.borderColor = radio.checked ? '#111827' : 'transparent';
+    if (radio.nextElementSibling) {
+      radio.nextElementSibling.style.borderColor = radio.checked ? '#111827' : 'transparent';
+    }
   });
   
-  document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
-  document.getElementById('saveTagBtn').addEventListener('click', handleSaveEditTag);
+  const cancelModalBtn = document.getElementById('cancelModalBtn');
+  if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
+  
+  const saveTagBtn = document.getElementById('saveTagBtn');
+  if (saveTagBtn) saveTagBtn.addEventListener('click', handleSaveEditTag);
 }
 
 async function handleSaveEditTag() {
@@ -815,24 +854,39 @@ async function handleImport(file) {
 }
 
 function bindEvents() {
-  document.getElementById('closeModalBtn').addEventListener('click', closeModal);
-  document.getElementById('modalOverlay').addEventListener('click', (e) => {
+  const closeModalBtn = document.getElementById('closeModalBtn');
+  if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+  
+  const modalOverlay = document.getElementById('modalOverlay');
+  if (modalOverlay) modalOverlay.addEventListener('click', (e) => {
     if (e.target.id === 'modalOverlay') {
       closeModal();
     }
   });
   
-  document.getElementById('searchInput').addEventListener('input', (e) => {
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) searchInput.addEventListener('input', (e) => {
     state.searchKeyword = e.target.value;
     renderAll();
   });
   
-  document.getElementById('addPageBtn').addEventListener('click', openAddPageModal);
-  document.getElementById('addGroupBtn').addEventListener('click', openAddGroupModal);
-  document.getElementById('addTagBtn').addEventListener('click', openAddTagModal);
-  document.getElementById('exportBtn').addEventListener('click', handleExport);
-  document.getElementById('importBtn').addEventListener('click', handleImportClick);
-  document.getElementById('importInput').addEventListener('change', (e) => {
+  const addPageBtn = document.getElementById('addPageBtn');
+  if (addPageBtn) addPageBtn.addEventListener('click', openAddPageModal);
+  
+  const addGroupBtn = document.getElementById('addGroupBtn');
+  if (addGroupBtn) addGroupBtn.addEventListener('click', openAddGroupModal);
+  
+  const addTagBtn = document.getElementById('addTagBtn');
+  if (addTagBtn) addTagBtn.addEventListener('click', openAddTagModal);
+  
+  const exportBtn = document.getElementById('exportBtn');
+  if (exportBtn) exportBtn.addEventListener('click', handleExport);
+  
+  const importBtn = document.getElementById('importBtn');
+  if (importBtn) importBtn.addEventListener('click', handleImportClick);
+  
+  const importInput = document.getElementById('importInput');
+  if (importInput) importInput.addEventListener('change', (e) => {
     if (e.target.files[0]) {
       handleImport(e.target.files[0]);
       e.target.value = '';

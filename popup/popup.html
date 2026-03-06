@@ -4,39 +4,39 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>添加页面</title>
-  <link rel="stylesheet" href="popup.css">
+  <link rel="stylesheet" href="../lib/output.css">
 </head>
-<body>
-  <div class="container">
-    <h1>添加当前页面</h1>
+<body class="font-sans bg-gray-100 text-gray-800">
+  <div class="w-[400px] p-5">
+    <h1 class="text-xl font-semibold mb-5 text-gray-900">添加当前页面</h1>
     
-    <div id="pageInfo" class="page-info">
-      <div class="favicon-container">
-        <img id="favicon" src="" alt="favicon" class="favicon">
+    <div id="pageInfo" class="flex gap-3 p-4 bg-white rounded-lg mb-5 shadow-sm">
+      <div class="flex-shrink-0">
+        <img id="favicon" src="" alt="favicon" class="w-8 h-8 rounded">
       </div>
-      <div class="page-details">
-        <div id="pageTitle" class="page-title"></div>
-        <div id="pageUrl" class="page-url"></div>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label for="tags">标签</label>
-      <div id="tagsContainer" class="tags-container"></div>
-      <div class="add-tag-container">
-        <input type="text" id="newTagInput" placeholder="输入新标签名称" class="tag-input">
-        <button id="addTagBtn" class="btn btn-secondary">添加标签</button>
+      <div class="flex-1 min-w-0">
+        <div id="pageTitle" class="font-medium text-sm mb-1 truncate"></div>
+        <div id="pageUrl" class="text-xs text-gray-500 truncate"></div>
       </div>
     </div>
 
-    <div class="form-group">
-      <label for="group">分组</label>
-      <select id="groupSelect" class="group-select">
+    <div class="mb-5">
+      <label class="block text-sm font-medium mb-2 text-gray-700" for="tags">标签</label>
+      <div id="tagsContainer" class="flex flex-wrap gap-2 mb-3 min-h-[32px]"></div>
+      <div class="flex gap-2">
+        <input type="text" id="newTagInput" placeholder="输入新标签名称" class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:ring-opacity-20 transition-all duration-200">
+        <button id="addTagBtn" class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200">添加标签</button>
+      </div>
+    </div>
+
+    <div class="mb-5">
+      <label class="block text-sm font-medium mb-2 text-gray-700" for="group">分组</label>
+      <select id="groupSelect" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm bg-white cursor-pointer outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:ring-opacity-20 transition-all duration-200">
         <option value="">未分组</option>
       </select>
     </div>
 
-    <button id="addPageBtn" class="btn btn-primary">添加页面</button>
+    <button id="addPageBtn" class="w-full py-2.5 px-5 bg-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-600 transition-all duration-200">添加页面</button>
   </div>
 
   <script type="module" src="popup.js"></script>
