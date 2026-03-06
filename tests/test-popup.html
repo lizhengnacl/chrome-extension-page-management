@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Popup页面测试 - 阶段8</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        h2 {
+            color: #666;
+            margin-top: 30px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+        }
+        .pass {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .fail {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #3367d6;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        .log-section {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        .popup-preview {
+            width: 400px;
+            margin: 20px auto;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <h1>📋 Popup页面测试 - 阶段8</h1>
+    
+    <div class="test-section">
+        <h2>T8-01: popup.html 结构测试</h2>
+        <div id="test-html-results"></div>
+        <button id="btn-test-html">运行 HTML 结构测试</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>T8-02: popup.css 样式测试</h2>
+        <div id="test-css-results"></div>
+        <button id="btn-test-css">运行 CSS 样式测试</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Popup页面预览</h2>
+        <div class="info">
+            <p>注意：完整的Popup功能测试需要在Chrome扩展环境中运行。</p>
+            <p>以下是一个简化的预览版本：</p>
+        </div>
+        <div class="popup-preview">
+            <iframe id="popup-iframe" style="width: 100%; height: 500px; border: none;"></iframe>
+        </div>
+        <button id="btn-load-popup">加载Popup预览</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>完整测试说明</h2>
+        <div id="test-summary"></div>
+        <button id="btn-run-all">运行所有测试</button>
+    </div>
+    
+    <div class="log-section">
+        <h2>测试日志</h2>
+        <pre id="test-log"></pre>
+    </div>
+
+    <script>
+        const logElement = document.getElementById('test-log');
+        const htmlResults = document.getElementById('test-html-results');
+        const cssResults = document.getElementById('test-css-results');
+        const testSummary = document.getElementById('test-summary');
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+        }
+
+        function createResult(testName, status, message) {
+            const div = document.createElement('div');
+            div.className = `test-result ${status}`;
+            div.innerHTML = `<strong>${testName}</strong>: ${message}`;
+            return div;
+        }
+
+        async function testPopupHTML() {
+            htmlResults.innerHTML = '';
+            log('=== 开始测试 popup.html 结构 ===');
+            
+            let allPassed = true;
+            
+            try {
+                const response = await fetch('../popup/popup.html');
+                const html = await response.text();
+                
+                const test1 = createResult(
+                    '测试1: 文件存在且可读取',
+                    'pass',
+                    '✓ popup.html 文件读取成功'
+                );
+                htmlResults.appendChild(test1);
+                
+                const hasContainer = html.includes('class="container"');
+                const test2 = createResult(
+                    '测试2: 包含container容器',
+                    hasContainer ? 'pass' : 'fail',
+                    hasContainer ? '✓ 找到container容器' : '✗ 缺少container容器'
+                );
+                htmlResults.appendChild(test2);
+                if (!hasContainer) allPassed = false;
+                
+                const hasPageInfo = html.includes('id="pageInfo"');
+                const test3 = createResult(
+                    '测试3: 包含pageInfo区域',
+                    hasPageInfo ? 'pass' : 'fail',
+                    hasPageInfo ? '✓ 找到pageInfo区域' : '✗ 缺少pageInfo区域'
+                );
+                htmlResults.appendChild(test3);
+                if (!hasPageInfo) allPassed = false;
+                
+                const hasTagsContainer = html.includes('id="tagsContainer"');
+                const test4 = createResult(
+                    '测试4: 包含tagsContainer',
+                    hasTagsContainer ? 'pass' : 'fail',
+                    hasTagsContainer ? '✓ 找到tagsContainer' : '✗ 缺少tagsContainer'
+                );
+                htmlResults.appendChild(test4);
+                if (!hasTagsContainer) allPassed = false;
+                
+                const hasGroupSelect = html.includes('id="groupSelect"');
+                const test5 = createResult(
+                    '测试5: 包含groupSelect',
+                    hasGroupSelect ? 'pass' : 'fail',
+                    hasGroupSelect ? '✓ 找到groupSelect' : '✗ 缺少groupSelect'
+                );
+                htmlResults.appendChild(test5);
+                if (!hasGroupSelect) allPassed = false;
+                
+                const hasAddPageBtn = html.includes('id="addPageBtn"');
+                const test6 = createResult(
+                    '测试6: 包含addPageBtn按钮',
+                    hasAddPageBtn ? 'pass' : 'fail',
+                    hasAddPageBtn ? '✓ 找到addPageBtn按钮' : '✗ 缺少addPageBtn按钮'
+                );
+                htmlResults.appendChild(test6);
+                if (!hasAddPageBtn) allPassed = false;
+                
+                const hasScriptTag = html.includes('popup.js');
+                const test7 = createResult(
+                    '测试7: 引用popup.js脚本',
+                    hasScriptTag ? 'pass' : 'fail',
+                    hasScriptTag ? '✓ 找到popup.js引用' : '✗ 缺少popup.js引用'
+                );
+                htmlResults.appendChild(test7);
+                if (!hasScriptTag) allPassed = false;
+                
+                log(`popup.html 结构测试${allPassed ? '通过' : '失败'}`);
+                return allPassed;
+                
+            } catch (error) {
+                const testError = createResult(
+                    '测试异常',
+                    'fail',
+                    `✗ 错误: ${error.message}`
+                );
+                htmlResults.appendChild(testError);
+                log(`popup.html 测试异常: ${error.message}`);
+                return false;
+            }
+        }
+
+        async function testPopupCSS() {
+            cssResults.innerHTML = '';
+            log('=== 开始测试 popup.css 样式 ===');
+            
+            let allPassed = true;
+            
+            try {
+                const response = await fetch('../popup/popup.css');
+                const css = await response.text();
+                
+                const test1 = createResult(
+                    '测试1: 文件存在且可读取',
+                    'pass',
+                    '✓ popup.css 文件读取成功'
+                );
+                cssResults.appendChild(test1);
+                
+                const hasContainerStyle = css.includes('.container');
+                const test2 = createResult(
+                    '测试2: 包含.container样式',
+                    hasContainerStyle ? 'pass' : 'fail',
+                    hasContainerStyle ? '✓ 找到.container样式' : '✗ 缺少.container样式'
+                );
+                cssResults.appendChild(test2);
+                if (!hasContainerStyle) allPassed = false;
+                
+                const hasPageInfoStyle = css.includes('.page-info');
+                const test3 = createResult(
+                    '测试3: 包含.page-info样式',
+                    hasPageInfoStyle ? 'pass' : 'fail',
+                    hasPageInfoStyle ? '✓ 找到.page-info样式' : '✗ 缺少.page-info样式'
+                );
+                cssResults.appendChild(test3);
+                if (!hasPageInfoStyle) allPassed = false;
+                
+                const hasTagStyle = css.includes('.tag');
+                const test4 = createResult(
+                    '测试4: 包含.tag样式',
+                    hasTagStyle ? 'pass' : 'fail',
+                    hasTagStyle ? '✓ 找到.tag样式' : '✗ 缺少.tag样式'
+                );
+                cssResults.appendChild(test4);
+                if (!hasTagStyle) allPassed = false;
+                
+                const hasBtnPrimary = css.includes('.btn-primary');
+                const test5 = createResult(
+                    '测试5: 包含.btn-primary样式',
+                    hasBtnPrimary ? 'pass' : 'fail',
+                    hasBtnPrimary ? '✓ 找到.btn-primary样式' : '✗ 缺少.btn-primary样式'
+                );
+                cssResults.appendChild(test5);
+                if (!hasBtnPrimary) allPassed = false;
+                
+                log(`popup.css 样式测试${allPassed ? '通过' : '失败'}`);
+                return allPassed;
+                
+            } catch (error) {
+                const testError = createResult(
+                    '测试异常',
+                    'fail',
+                    `✗ 错误: ${error.message}`
+                );
+                cssResults.appendChild(testError);
+                log(`popup.css 测试异常: ${error.message}`);
+                return false;
+            }
+        }
+
+        function loadPopupPreview() {
+            log('加载Popup预览...');
+            const iframe = document.getElementById('popup-iframe');
+            iframe.src = '../popup/popup.html';
+            log('Popup预览已加载');
+        }
+
+        async function runAllTests() {
+            testSummary.innerHTML = '';
+            log('=== 开始运行所有Popup测试 ===');
+            
+            const htmlPassed = await testPopupHTML();
+            const cssPassed = await testPopupCSS();
+            const allPassed = htmlPassed && cssPassed;
+            
+            const summary = document.createElement('div');
+            summary.className = `test-result ${allPassed ? 'pass' : 'fail'}`;
+            summary.innerHTML = `
+                <strong>测试总结</strong>:<br>
+                - HTML结构测试: ${htmlPassed ? '✓ 通过' : '✗ 失败'}<br>
+                - CSS样式测试: ${cssPassed ? '✓ 通过' : '✗ 失败'}<br>
+                <br>
+                <em>注意：JavaScript功能测试需要在Chrome扩展环境中运行</em>
+            `;
+            testSummary.appendChild(summary);
+            
+            log(`=== 所有Popup测试完成，结果: ${allPassed ? '全部通过' : '部分失败'} ===`);
+        }
+
+        document.getElementById('btn-test-html').addEventListener('click', testPopupHTML);
+        document.getElementById('btn-test-css').addEventListener('click', testPopupCSS);
+        document.getElementById('btn-load-popup').addEventListener('click', loadPopupPreview);
+        document.getElementById('btn-run-all').addEventListener('click', runAllTests);
+
+        log('Popup测试页面已加载，请点击按钮运行测试');
+    </script>
+</body>
+</html>

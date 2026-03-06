@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阶段10测试 - Newtab页面分组管理</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        h2 {
+            color: #666;
+            margin-top: 30px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+        }
+        .pass {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .fail {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #3367d6;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        .log-section {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        .function-detail {
+            background: #fafafa;
+            border: 1px solid #eee;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .function-detail h3 {
+            margin-top: 0;
+            color: #3b82f6;
+        }
+        .function-detail code {
+            background: #eee;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <h1>📋 阶段10测试 - Newtab页面分组管理</h1>
+    
+    <div class="test-section">
+        <h2>测试说明</h2>
+        <div class="info">
+            <p><strong>阶段10任务：</strong></p>
+            <ul>
+                <li>T10-01: 实现 handleAddGroup() 函数 - 创建新分组</li>
+                <li>T10-02: 实现 handleEditGroup() 函数 - 编辑分组名称</li>
+                <li>T10-03: 实现 handleDeleteGroup() 函数 - 删除分组</li>
+                <li>T10-04: 实现 handleOpenGroup() 函数 - 打开分组所有页面</li>
+            </ul>
+            <p><em>注意：完整功能测试需要在Chrome扩展环境中运行。以下是代码验证结果。</em></p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>T10-01: handleAddGroup() 函数验证</h2>
+        <div id="test-addgroup-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>T10-02: handleEditGroup() 函数验证</h2>
+        <div id="test-editgroup-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>T10-03: handleDeleteGroup() 函数验证</h2>
+        <div id="test-deletegroup-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>T10-04: handleOpenGroup() 函数验证</h2>
+        <div id="test-opengroup-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>函数实现详情</h2>
+        <div id="function-details"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>完整测试说明</h2>
+        <div id="test-summary"></div>
+        <button id="btn-run-all">运行所有验证</button>
+    </div>
+    
+    <div class="log-section">
+        <h2>测试日志</h2>
+        <pre id="test-log"></pre>
+    </div>
+
+    <script>
+        const logElement = document.getElementById('test-log');
+        const testSummary = document.getElementById('test-summary');
+        const functionDetails = document.getElementById('function-details');
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+        }
+
+        function createResult(testName, status, message) {
+            const div = document.createElement('div');
+            div.className = `test-result ${status}`;
+            div.innerHTML = `<strong>${testName}</strong>: ${message}`;
+            return div;
+        }
+
+        async function loadAndAnalyzeCode() {
+            log('=== 开始加载和分析代码 ===');
+            
+            try {
+                const response = await fetch('../newtab/newtab.js');
+                const code = await response.text();
+                
+                let allPassed = true;
+                
+                const addGroupResults = document.getElementById('test-addgroup-results');
+                const hasOpenAddGroupModal = code.includes('function openAddGroupModal');
+                const hasHandleSaveNewGroup = code.includes('async function handleSaveNewGroup');
+                const hasAddGroupBtnBinding = code.includes('addGroupBtn');
+                
+                addGroupResults.innerHTML = '';
+                addGroupResults.appendChild(createResult(
+                    '验证1: openAddGroupModal函数存在',
+                    hasOpenAddGroupModal ? 'pass' : 'fail',
+                    hasOpenAddGroupModal ? '✓ 找到openAddGroupModal函数' : '✗ 缺少openAddGroupModal函数'
+                ));
+                addGroupResults.appendChild(createResult(
+                    '验证2: handleSaveNewGroup函数存在',
+                    hasHandleSaveNewGroup ? 'pass' : 'fail',
+                    hasHandleSaveNewGroup ? '✓ 找到handleSaveNewGroup函数' : '✗ 缺少handleSaveNewGroup函数'
+                ));
+                addGroupResults.appendChild(createResult(
+                    '验证3: 添加分组按钮事件绑定',
+                    hasAddGroupBtnBinding ? 'pass' : 'fail',
+                    hasAddGroupBtnBinding ? '✓ 找到addGroupBtn事件绑定' : '✗ 缺少addGroupBtn事件绑定'
+                ));
+                if (!hasOpenAddGroupModal || !hasHandleSaveNewGroup || !hasAddGroupBtnBinding) allPassed = false;
+                
+                const editGroupResults = document.getElementById('test-editgroup-results');
+                const hasOpenEditGroupModal = code.includes('function openEditGroupModal');
+                const hasHandleSaveEditGroup = code.includes('async function handleSaveEditGroup');
+                
+                editGroupResults.innerHTML = '';
+                editGroupResults.appendChild(createResult(
+                    '验证1: openEditGroupModal函数存在',
+                    hasOpenEditGroupModal ? 'pass' : 'fail',
+                    hasOpenEditGroupModal ? '✓ 找到openEditGroupModal函数' : '✗ 缺少openEditGroupModal函数'
+                ));
+                editGroupResults.appendChild(createResult(
+                    '验证2: handleSaveEditGroup函数存在',
+                    hasHandleSaveEditGroup ? 'pass' : 'fail',
+                    hasHandleSaveEditGroup ? '✓ 找到handleSaveEditGroup函数' : '✗ 缺少handleSaveEditGroup函数'
+                ));
+                if (!hasOpenEditGroupModal || !hasHandleSaveEditGroup) allPassed = false;
+                
+                const deleteGroupResults = document.getElementById('test-deletegroup-results');
+                const hasHandleDeleteGroup = code.includes('async function handleDeleteGroup');
+                const hasShowConfirm = code.includes('showConfirm');
+                
+                deleteGroupResults.innerHTML = '';
+                deleteGroupResults.appendChild(createResult(
+                    '验证1: handleDeleteGroup函数存在',
+                    hasHandleDeleteGroup ? 'pass' : 'fail',
+                    hasHandleDeleteGroup ? '✓ 找到handleDeleteGroup函数' : '✗ 缺少handleDeleteGroup函数'
+                ));
+                deleteGroupResults.appendChild(createResult(
+                    '验证2: 使用确认对话框',
+                    hasShowConfirm ? 'pass' : 'fail',
+                    hasShowConfirm ? '✓ 使用showConfirm确认删除' : '✗ 缺少确认对话框'
+                ));
+                if (!hasHandleDeleteGroup || !hasShowConfirm) allPassed = false;
+                
+                const openGroupResults = document.getElementById('test-opengroup-results');
+                const hasHandleOpenGroup = code.includes('async function handleOpenGroup');
+                const hasChromeTabsCreate = code.includes('chrome.tabs.create');
+                
+                openGroupResults.innerHTML = '';
+                openGroupResults.appendChild(createResult(
+                    '验证1: handleOpenGroup函数存在',
+                    hasHandleOpenGroup ? 'pass' : 'fail',
+                    hasHandleOpenGroup ? '✓ 找到handleOpenGroup函数' : '✗ 缺少handleOpenGroup函数'
+                ));
+                openGroupResults.appendChild(createResult(
+                    '验证2: 使用chrome.tabs.create打开页面',
+                    hasChromeTabsCreate ? 'pass' : 'fail',
+                    hasChromeTabsCreate ? '✓ 使用chrome.tabs.create' : '✗ 缺少chrome.tabs.create调用'
+                ));
+                if (!hasHandleOpenGroup || !hasChromeTabsCreate) allPassed = false;
+                
+                displayFunctionDetails(code);
+                
+                const summary = document.createElement('div');
+                summary.className = `test-result ${allPassed ? 'pass' : 'fail'}`;
+                summary.innerHTML = `
+                    <strong>测试总结</strong>:<br>
+                    - T10-01 (handleAddGroup): ${hasOpenAddGroupModal && hasHandleSaveNewGroup && hasAddGroupBtnBinding ? '✓ 通过' : '✗ 失败'}<br>
+                    - T10-02 (handleEditGroup): ${hasOpenEditGroupModal && hasHandleSaveEditGroup ? '✓ 通过' : '✗ 失败'}<br>
+                    - T10-03 (handleDeleteGroup): ${hasHandleDeleteGroup && hasShowConfirm ? '✓ 通过' : '✗ 失败'}<br>
+                    - T10-04 (handleOpenGroup): ${hasHandleOpenGroup && hasChromeTabsCreate ? '✓ 通过' : '✗ 失败'}<br>
+                    <br>
+                    <em>注意：完整功能测试需要在Chrome扩展环境中运行</em>
+                `;
+                testSummary.appendChild(summary);
+                
+                log(`代码分析完成，结果: ${allPassed ? '全部通过' : '部分失败'}`);
+                return allPassed;
+                
+            } catch (error) {
+                log(`代码分析异常: ${error.message}`);
+                return false;
+            }
+        }
+
+        function displayFunctionDetails(code) {
+            functionDetails.innerHTML = '';
+            
+            const functions = [
+                {
+                    name: 'openAddGroupModal',
+                    description: '打开添加分组的模态框，显示分组名称输入框',
+                    line: code.indexOf('function openAddGroupModal')
+                },
+                {
+                    name: 'handleSaveNewGroup',
+                    description: '处理保存新分组，调用addGroup()添加到存储',
+                    line: code.indexOf('async function handleSaveNewGroup')
+                },
+                {
+                    name: 'openEditGroupModal',
+                    description: '打开编辑分组的模态框，预填充当前分组名称',
+                    line: code.indexOf('function openEditGroupModal')
+                },
+                {
+                    name: 'handleSaveEditGroup',
+                    description: '处理保存分组编辑，调用updateGroup()更新存储',
+                    line: code.indexOf('async function handleSaveEditGroup')
+                },
+                {
+                    name: 'handleDeleteGroup',
+                    description: '处理删除分组，先确认再调用deleteGroup()',
+                    line: code.indexOf('async function handleDeleteGroup')
+                },
+                {
+                    name: 'handleOpenGroup',
+                    description: '打开分组所有页面，使用chrome.tabs.create',
+                    line: code.indexOf('async function handleOpenGroup')
+                }
+            ];
+            
+            functions.forEach(func => {
+                if (func.line !== -1) {
+                    const div = document.createElement('div');
+                    div.className = 'function-detail';
+                    div.innerHTML = `
+                        <h3>✅ <code>${func.name}()</code></h3>
+                        <p>${func.description}</p>
+                    `;
+                    functionDetails.appendChild(div);
+                }
+            });
+        }
+
+        document.getElementById('btn-run-all').addEventListener('click', loadAndAnalyzeCode);
+
+        log('阶段10测试页面已加载，请点击按钮运行验证');
+        loadAndAnalyzeCode();
+    </script>
+</body>
+</html>

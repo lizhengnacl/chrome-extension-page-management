@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chrome 页面管理</title>
+  <link rel="stylesheet" href="newtab.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>Chrome 页面管理</h1>
+      <div class="header-actions">
+        <div class="search-container">
+          <input type="text" id="searchInput" placeholder="搜索页面..." class="search-input">
+        </div>
+        <button id="addTagBtn" class="btn btn-secondary">添加标签</button>
+        <button id="addPageBtn" class="btn btn-primary">添加页面</button>
+        <button id="exportBtn" class="btn btn-secondary">导出</button>
+        <input type="file" id="importInput" accept=".json" style="display: none;">
+        <button id="importBtn" class="btn btn-secondary">导入</button>
+      </div>
+    </header>
+
+    <section class="favorites-section" id="favoritesSection">
+      <h2>
+        <span class="icon">⭐</span>
+        常用页面
+      </h2>
+      <div id="favoritesList" class="pages-list"></div>
+    </section>
+
+    <section class="tags-section" id="tagsSection">
+      <h2>
+        <span class="icon">🏷️</span>
+        标签筛选
+      </h2>
+      <div id="tagsList" class="tags-list"></div>
+    </section>
+
+    <section class="groups-section" id="groupsSection">
+      <div class="section-header">
+        <h2>
+          <span class="icon">📁</span>
+          分组
+        </h2>
+        <button id="addGroupBtn" class="btn btn-sm btn-secondary">+ 添加分组</button>
+      </div>
+      <div id="groupsList" class="groups-list"></div>
+    </section>
+  </div>
+
+  <div id="modalOverlay" class="modal-overlay"></div>
+
+  <div id="modal" class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">编辑</h3>
+      <button id="closeModalBtn" class="close-btn">&times;</button>
+    </div>
+    <div class="modal-content" id="modalContent"></div>
+  </div>
+
+  <script type="module" src="newtab.js"></script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>阶段14测试 - 优化和收尾</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; }
+    .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+    .test-result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+    .pass { background: #d4edda; color: #155724; }
+    .warn { background: #fff3cd; color: #856404; }
+    .info { background: #d1ecf1; color: #0c5460; }
+  </style>
+</head>
+<body>
+  <h1>阶段14测试 - 优化和收尾</h1>
+  
+  <div class="test-section">
+    <h2>测试 1: 性能优化检查</h2>
+    <div id="performance-test"></div>
+  </div>
+  
+  <div class="test-section">
+    <h2>测试 2: 可访问性检查</h2>
+    <div id="accessibility-test"></div>
+  </div>
+  
+  <div class="test-section">
+    <h2>测试 3: 插件图标检查</h2>
+    <div id="icons-test"></div>
+  </div>
+
+  <script type="module">
+    const results = {
+      performance: [],
+      accessibility: [],
+      icons: []
+    };
+
+    function addResult(category, name, type, message) {
+      results[category].push({ name, type, message });
+      renderResults();
+    }
+
+    function renderResults() {
+      const perfContainer = document.getElementById('performance-test');
+      const a11yContainer = document.getElementById('accessibility-test');
+      const iconsContainer = document.getElementById('icons-test');
+      
+      perfContainer.innerHTML = results.performance.map(r => `
+        <div class="test-result ${r.type}">
+          <strong>${r.type === 'pass' ? '✓' : r.type === 'warn' ? '⚠' : 'ℹ'} ${r.name}</strong>: ${r.message}
+        </div>
+      `).join('');
+      
+      a11yContainer.innerHTML = results.accessibility.map(r => `
+        <div class="test-result ${r.type}">
+          <strong>${r.type === 'pass' ? '✓' : r.type === 'warn' ? '⚠' : 'ℹ'} ${r.name}</strong>: ${r.message}
+        </div>
+      `).join('');
+      
+      iconsContainer.innerHTML = results.icons.map(r => `
+        <div class="test-result ${r.type}">
+          <strong>${r.type === 'pass' ? '✓' : r.type === 'warn' ? '⚠' : 'ℹ'} ${r.name}</strong>: ${r.message}
+        </div>
+      `).join('');
+    }
+
+    async function runTests() {
+      console.log('开始阶段14测试...');
+      
+      addResult('performance', '加载时间检查', 'info', '请在浏览器控制台使用 Performance 面板检查加载时间');
+      addResult('performance', '响应速度检查', 'info', '请手动测试各功能的响应速度');
+      
+      addResult('accessibility', '语义化HTML检查', 'info', 'popup.html 和 newtab.html 使用了语义化标签');
+      addResult('accessibility', '键盘导航检查', 'info', '建议测试 Tab 键导航');
+      
+      addResult('icons', '插件图标检查', 'warn', '需要创建 icons/icon16.png, icons/icon48.png, icons/icon128.png');
+      
+      console.log('阶段14测试完成');
+    }
+
+    runTests();
+  </script>
+</body>
+</html>

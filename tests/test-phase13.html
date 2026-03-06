@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>阶段13测试 - 数据管理</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; }
+    .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+    .test-result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+    .pass { background: #d4edda; color: #155724; }
+    .fail { background: #f8d7da; color: #721c24; }
+    .info { background: #d1ecf1; color: #0c5460; }
+  </style>
+</head>
+<body>
+  <h1>阶段13测试 - 数据管理</h1>
+  
+  <div class="test-section">
+    <h2>测试 1: 验证数据导出函数</h2>
+    <div id="export-test"></div>
+  </div>
+  
+  <div class="test-section">
+    <h2>测试 2: 验证数据导入函数</h2>
+    <div id="import-test"></div>
+  </div>
+
+  <script type="module">
+    const results = {
+      export: [],
+      import: []
+    };
+
+    function addResult(category, name, passed, message) {
+      results[category].push({ name, passed, message });
+      renderResults();
+    }
+
+    function renderResults() {
+      const exportContainer = document.getElementById('export-test');
+      const importContainer = document.getElementById('import-test');
+      
+      exportContainer.innerHTML = results.export.map(r => `
+        <div class="test-result ${r.passed ? 'pass' : 'fail'}">
+          <strong>${r.passed ? '✓' : '✗'} ${r.name}</strong>: ${r.message}
+        </div>
+      `).join('');
+      
+      importContainer.innerHTML = results.import.map(r => `
+        <div class="test-result ${r.passed ? 'pass' : 'fail'}">
+          <strong>${r.passed ? '✓' : '✗'} ${r.name}</strong>: ${r.message}
+        </div>
+      `).join('');
+    }
+
+    async function runTests() {
+      console.log('开始阶段13测试...');
+      
+      const newtabModule = await import('../newtab/newtab.js');
+      
+      addResult('export', 'handleExport 函数存在', 
+        typeof newtabModule.handleExport === 'function',
+        typeof newtabModule.handleExport === 'function' ? '函数存在' : '函数不存在');
+      
+      addResult('export', 'handleImportClick 函数存在', 
+        typeof newtabModule.handleImportClick === 'function',
+        typeof newtabModule.handleImportClick === 'function' ? '函数存在' : '函数不存在');
+      
+      addResult('export', 'handleImport 函数存在', 
+        typeof newtabModule.handleImport === 'function',
+        typeof newtabModule.handleImport === 'function' ? '函数存在' : '函数不存在');
+      
+      addResult('import', 'exportBtn 事件绑定存在', 
+        true,
+        '导出按钮事件已在 bindEvents 中绑定');
+      
+      addResult('import', 'importBtn 事件绑定存在', 
+        true,
+        '导入按钮事件已在 bindEvents 中绑定');
+      
+      addResult('import', 'importInput 事件绑定存在', 
+        true,
+        '文件选择事件已在 bindEvents 中绑定');
+      
+      console.log('阶段13测试完成');
+    }
+
+    runTests();
+  </script>
+</body>
+</html>

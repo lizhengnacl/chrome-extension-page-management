@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阶段11测试 - Newtab页面页面管理</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        h2 {
+            color: #666;
+            margin-top: 30px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+        }
+        .pass {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .fail {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #3367d6;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        .log-section {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        .function-detail {
+            background: #fafafa;
+            border: 1px solid #eee;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .function-detail h3 {
+            margin-top: 0;
+            color: #3b82f6;
+        }
+        .function-detail code {
+            background: #eee;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <h1>📋 阶段11测试 - Newtab页面页面管理</h1>
+    
+    <div class="test-section">
+        <h2>测试说明</h2>
+        <div class="info">
+            <p><strong>阶段11任务：</strong></p>
+            <ul>
+                <li>T11-01: 实现 handleAddPage() 函数 - 手动添加页面</li>
+                <li>T11-02: 实现 handleEditPage() 函数 - 编辑页面</li>
+                <li>T11-03: 实现 handleDeletePage() 函数 - 删除页面</li>
+                <li>T11-04: 实现 handleToggleFavorite() 函数 - 切换常用标记</li>
+                <li>T11-05: 实现拖拽排序功能 - 拖拽调整页面顺序</li>
+            </ul>
+            <p><em>注意：完整功能测试需要在Chrome扩展环境中运行。以下是代码验证结果。</em></p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>T11-01: handleAddPage() 函数验证</h2>
+        <div id="test-addpage-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>T11-02: handleEditPage() 函数验证</h2>
+        <div id="test-editpage-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>T11-03: handleDeletePage() 函数验证</h2>
+        <div id="test-deletepage-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>T11-04: handleToggleFavorite() 函数验证</h2>
+        <div id="test-togglefavorite-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>T11-05: 拖拽排序功能验证</h2>
+        <div id="test-dragsort-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>函数实现详情</h2>
+        <div id="function-details"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>完整测试说明</h2>
+        <div id="test-summary"></div>
+        <button id="btn-run-all">运行所有验证</button>
+    </div>
+    
+    <div class="log-section">
+        <h2>测试日志</h2>
+        <pre id="test-log"></pre>
+    </div>
+
+    <script>
+        const logElement = document.getElementById('test-log');
+        const testSummary = document.getElementById('test-summary');
+        const functionDetails = document.getElementById('function-details');
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+        }
+
+        function createResult(testName, status, message) {
+            const div = document.createElement('div');
+            div.className = `test-result ${status}`;
+            div.innerHTML = `<strong>${testName}</strong>: ${message}`;
+            return div;
+        }
+
+        async function loadAndAnalyzeCode() {
+            log('=== 开始加载和分析代码 ===');
+            
+            try {
+                const response = await fetch('../newtab/newtab.js');
+                const code = await response.text();
+                
+                let allPassed = true;
+                
+                const addPageResults = document.getElementById('test-addpage-results');
+                const hasOpenAddPageModal = code.includes('function openAddPageModal');
+                const hasHandleSaveNewPage = code.includes('async function handleSaveNewPage');
+                const hasAddPageBtnBinding = code.includes('addPageBtn');
+                
+                addPageResults.innerHTML = '';
+                addPageResults.appendChild(createResult(
+                    '验证1: openAddPageModal函数存在',
+                    hasOpenAddPageModal ? 'pass' : 'fail',
+                    hasOpenAddPageModal ? '✓ 找到openAddPageModal函数' : '✗ 缺少openAddPageModal函数'
+                ));
+                addPageResults.appendChild(createResult(
+                    '验证2: handleSaveNewPage函数存在',
+                    hasHandleSaveNewPage ? 'pass' : 'fail',
+                    hasHandleSaveNewPage ? '✓ 找到handleSaveNewPage函数' : '✗ 缺少handleSaveNewPage函数'
+                ));
+                addPageResults.appendChild(createResult(
+                    '验证3: 添加页面按钮事件绑定',
+                    hasAddPageBtnBinding ? 'pass' : 'fail',
+                    hasAddPageBtnBinding ? '✓ 找到addPageBtn事件绑定' : '✗ 缺少addPageBtn事件绑定'
+                ));
+                if (!hasOpenAddPageModal || !hasHandleSaveNewPage || !hasAddPageBtnBinding) allPassed = false;
+                
+                const editPageResults = document.getElementById('test-editpage-results');
+                const hasOpenEditPageModal = code.includes('function openEditPageModal');
+                const hasHandleSaveEditPage = code.includes('async function handleSaveEditPage');
+                
+                editPageResults.innerHTML = '';
+                editPageResults.appendChild(createResult(
+                    '验证1: openEditPageModal函数存在',
+                    hasOpenEditPageModal ? 'pass' : 'fail',
+                    hasOpenEditPageModal ? '✓ 找到openEditPageModal函数' : '✗ 缺少openEditPageModal函数'
+                ));
+                editPageResults.appendChild(createResult(
+                    '验证2: handleSaveEditPage函数存在',
+                    hasHandleSaveEditPage ? 'pass' : 'fail',
+                    hasHandleSaveEditPage ? '✓ 找到handleSaveEditPage函数' : '✗ 缺少handleSaveEditPage函数'
+                ));
+                if (!hasOpenEditPageModal || !hasHandleSaveEditPage) allPassed = false;
+                
+                const deletePageResults = document.getElementById('test-deletepage-results');
+                const hasHandleDeletePage = code.includes('async function handleDeletePage');
+                const hasShowConfirmDelete = code.includes('showConfirm');
+                
+                deletePageResults.innerHTML = '';
+                deletePageResults.appendChild(createResult(
+                    '验证1: handleDeletePage函数存在',
+                    hasHandleDeletePage ? 'pass' : 'fail',
+                    hasHandleDeletePage ? '✓ 找到handleDeletePage函数' : '✗ 缺少handleDeletePage函数'
+                ));
+                deletePageResults.appendChild(createResult(
+                    '验证2: 使用确认对话框',
+                    hasShowConfirmDelete ? 'pass' : 'fail',
+                    hasShowConfirmDelete ? '✓ 使用showConfirm确认删除' : '✗ 缺少确认对话框'
+                ));
+                if (!hasHandleDeletePage || !hasShowConfirmDelete) allPassed = false;
+                
+                const toggleFavoriteResults = document.getElementById('test-togglefavorite-results');
+                const hasHandleToggleFavorite = code.includes('async function handleToggleFavorite');
+                
+                toggleFavoriteResults.innerHTML = '';
+                toggleFavoriteResults.appendChild(createResult(
+                    '验证1: handleToggleFavorite函数存在',
+                    hasHandleToggleFavorite ? 'pass' : 'fail',
+                    hasHandleToggleFavorite ? '✓ 找到handleToggleFavorite函数' : '✗ 缺少handleToggleFavorite函数'
+                ));
+                if (!hasHandleToggleFavorite) allPassed = false;
+                
+                const dragSortResults = document.getElementById('test-dragsort-results');
+                const hasDraggable = code.includes('draggable="true"');
+                const hasHandleReorderPages = code.includes('async function handleReorderPages');
+                const hasDragEvents = code.includes('dragstart') && code.includes('dragend') && code.includes('dragover') && code.includes('drop');
+                
+                dragSortResults.innerHTML = '';
+                dragSortResults.appendChild(createResult(
+                    '验证1: 页面项设置为可拖拽',
+                    hasDraggable ? 'pass' : 'fail',
+                    hasDraggable ? '✓ 找到draggable="true"属性' : '✗ 缺少draggable属性'
+                ));
+                dragSortResults.appendChild(createResult(
+                    '验证2: handleReorderPages函数存在',
+                    hasHandleReorderPages ? 'pass' : 'fail',
+                    hasHandleReorderPages ? '✓ 找到handleReorderPages函数' : '✗ 缺少handleReorderPages函数'
+                ));
+                dragSortResults.appendChild(createResult(
+                    '验证3: 拖拽事件绑定完整',
+                    hasDragEvents ? 'pass' : 'fail',
+                    hasDragEvents ? '✓ 找到dragstart/dragend/dragover/drop事件' : '✗ 拖拽事件不完整'
+                ));
+                if (!hasDraggable || !hasHandleReorderPages || !hasDragEvents) allPassed = false;
+                
+                displayFunctionDetails(code);
+                
+                const summary = document.createElement('div');
+                summary.className = `test-result ${allPassed ? 'pass' : 'fail'}`;
+                summary.innerHTML = `
+                    <strong>测试总结</strong>:<br>
+                    - T11-01 (handleAddPage): ${hasOpenAddPageModal && hasHandleSaveNewPage && hasAddPageBtnBinding ? '✓ 通过' : '✗ 失败'}<br>
+                    - T11-02 (handleEditPage): ${hasOpenEditPageModal && hasHandleSaveEditPage ? '✓ 通过' : '✗ 失败'}<br>
+                    - T11-03 (handleDeletePage): ${hasHandleDeletePage && hasShowConfirmDelete ? '✓ 通过' : '✗ 失败'}<br>
+                    - T11-04 (handleToggleFavorite): ${hasHandleToggleFavorite ? '✓ 通过' : '✗ 失败'}<br>
+                    - T11-05 (拖拽排序): ${hasDraggable && hasHandleReorderPages && hasDragEvents ? '✓ 通过' : '✗ 失败'}<br>
+                    <br>
+                    <em>注意：完整功能测试需要在Chrome扩展环境中运行</em>
+                `;
+                testSummary.appendChild(summary);
+                
+                log(`代码分析完成，结果: ${allPassed ? '全部通过' : '部分失败'}`);
+                return allPassed;
+                
+            } catch (error) {
+                log(`代码分析异常: ${error.message}`);
+                return false;
+            }
+        }
+
+        function displayFunctionDetails(code) {
+            functionDetails.innerHTML = '';
+            
+            const functions = [
+                {
+                    name: 'openAddPageModal',
+                    description: '打开添加页面的模态框，显示URL、标题、分组、标签输入',
+                    line: code.indexOf('function openAddPageModal')
+                },
+                {
+                    name: 'handleSaveNewPage',
+                    description: '处理保存新页面，调用addPage()添加到存储',
+                    line: code.indexOf('async function handleSaveNewPage')
+                },
+                {
+                    name: 'openEditPageModal',
+                    description: '打开编辑页面的模态框，预填充当前页面信息',
+                    line: code.indexOf('function openEditPageModal')
+                },
+                {
+                    name: 'handleSaveEditPage',
+                    description: '处理保存页面编辑，调用updatePage()更新存储',
+                    line: code.indexOf('async function handleSaveEditPage')
+                },
+                {
+                    name: 'handleDeletePage',
+                    description: '处理删除页面，先确认再调用deletePage()',
+                    line: code.indexOf('async function handleDeletePage')
+                },
+                {
+                    name: 'handleToggleFavorite',
+                    description: '切换页面常用标记，调用updatePage()更新isFavorite',
+                    line: code.indexOf('async function handleToggleFavorite')
+                },
+                {
+                    name: 'handleReorderPages',
+                    description: '处理页面拖拽排序，交换两个页面的order值',
+                    line: code.indexOf('async function handleReorderPages')
+                },
+                {
+                    name: 'setupPageItemEvents',
+                    description: '设置页面项的事件绑定，包括拖拽事件',
+                    line: code.indexOf('function setupPageItemEvents')
+                }
+            ];
+            
+            functions.forEach(func => {
+                if (func.line !== -1) {
+                    const div = document.createElement('div');
+                    div.className = 'function-detail';
+                    div.innerHTML = `
+                        <h3>✅ <code>${func.name}()</code></h3>
+                        <p>${func.description}</p>
+                    `;
+                    functionDetails.appendChild(div);
+                }
+            });
+        }
+
+        document.getElementById('btn-run-all').addEventListener('click', loadAndAnalyzeCode);
+
+        log('阶段11测试页面已加载，请点击按钮运行验证');
+        loadAndAnalyzeCode();
+    </script>
+</body>
+</html>
