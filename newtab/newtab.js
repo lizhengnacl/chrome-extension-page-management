@@ -28,6 +28,19 @@ import {
 } from '../lib/utils.js';
 import { DEFAULT_TAG_COLORS } from '../lib/constants.js';
 
+function getColorForTagName(tagName) {
+  if (!tagName || tagName.trim() === '') {
+    return DEFAULT_TAG_COLORS[0];
+  }
+  
+  const hash = tagName.trim().toLowerCase().split('').reduce((acc, char) => {
+    return acc + char.charCodeAt(0);
+  }, 0);
+  
+  const colorIndex = hash % DEFAULT_TAG_COLORS.length;
+  return DEFAULT_TAG_COLORS[colorIndex];
+}
+
 let state = {
   pages: [],
   groups: [],
@@ -40,6 +53,9 @@ let state = {
   draggedPageId: null
 };
 
+let lastTagClickTime = 0;
+let tagClickTimeout = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
   await initNewtab();
 });
@@ -50,6 +66,15 @@ async function initNewtab() {
     await loadData();
     renderAll();
     bindEvents();
+    
+    document.addEventListener('click', (e) => {
+      if (state.editingTagId) {
+        const isEditingElement = e.target.closest('[data-tag-id="' + state.editingTagId + '"]');
+        if (!isEditingElement) {
+          saveTagEdit(state.editingTagId);
+        }
+      }
+    });
   } catch (error) {
     console.error('Failed to initialize newtab:', error);
     showToast('初始化失败，请刷新页面', 'error');
@@ -94,6 +119,107 @@ function renderFavorites() {
   });
 }
 
+function renderEditingTag(tag) {
+  return `
+    <div class="flex items-center gap-2 mb-2 p-2 bg-blue-50 rounded-lg" data-tag-id="${tag.id}">
+      <div class="flex items-center gap-2 flex-1">
+        <input type="text" 
+               value="${tag.name}" 
+               class="flex-1 px-3 py-1.5 rounded-full text-sm outline-none border-2 border-blue-500 bg-white text-gray-900 shadow-sm transition-all duration-200"
+               data-tag-id="${tag.id}"
+               id="editTagInput"
+               tabindex="0"
+               autofocus>
+        <div class="flex gap-1">
+          <button class="px-3 py-1 bg-green-500 text-white rounded-full text-xs font-medium cursor-pointer hover:bg-green-600 transition-all duration-200 shadow-sm save-edit-btn" 
+                  data-tag-id="${tag.id}" 
+                  title="保存 (Enter)"
+                  tabindex="1">✓ 保存</button>
+          <button class="px-3 py-1 bg-gray-500 text-white rounded-full text-xs font-medium cursor-pointer hover:bg-gray-600 transition-all duration-200 shadow-sm cancel-edit-btn" 
+                  data-tag-id="${tag.id}" 
+                  title="取消 (Esc)"
+                  tabindex="2">✕ 取消</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function handleTagClick(tagId, event) {
+  const currentTime = Date.now();
+  const timeSinceLastClick = currentTime - lastTagClickTime;
+  
+  if (timeSinceLastClick < 300 && timeSinceLastClick > 0) {
+    if (tagClickTimeout) {
+      clearTimeout(tagClickTimeout);
+      tagClickTimeout = null;
+    }
+    startTagEdit(tagId);
+  } else {
+    tagClickTimeout = setTimeout(() => {
+      state.selectedTagId = state.selectedTagId === tagId ? null : tagId;
+      renderAll();
+    }, 300);
+  }
+  
+  lastTagClickTime = currentTime;
+}
+
+function startTagEdit(tagId) {
+  state.editingTagId = tagId;
+  renderTags();
+  
+  const input = document.getElementById('editTagInput');
+  if (input) {
+    input.focus();
+    input.select();
+    
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        saveTagEdit(tagId);
+      } else if (e.key === 'Escape') {
+        cancelTagEdit();
+      }
+    });
+    
+    const saveBtn = input.parentElement.querySelector('.save-edit-btn');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', () => saveTagEdit(tagId));
+    }
+    
+    const cancelBtn = input.parentElement.querySelector('.cancel-edit-btn');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => cancelTagEdit());
+    }
+  }
+}
+
+async function saveTagEdit(tagId) {
+  const input = document.getElementById('editTagInput');
+  const name = input ? input.value.trim() : '';
+  
+  if (!name) {
+    showToast('请输入标签名称', 'error');
+    return;
+  }
+  
+  try {
+    await updateTag(tagId, { name });
+    await loadData();
+    state.editingTagId = null;
+    renderAll();
+    showToast('标签已更新', 'success');
+  } catch (error) {
+    console.error('Failed to update tag:', error);
+    showToast('更新失败', 'error');
+  }
+}
+
+function cancelTagEdit() {
+  state.editingTagId = null;
+  renderTags();
+}
+
 function renderTags() {
   const container = document.getElementById('tagsList');
   
@@ -108,28 +234,26 @@ function renderTags() {
             style="background: #e5e7eb; color: #374151;"
             data-tag-id="">全部</span>
     </div>
-    ${state.tags.map(tag => `
-      <div class="flex items-center gap-2 mb-2">
-        <span class="px-3.5 py-1.5 rounded-full text-sm cursor-pointer transition-all duration-200 select-none hover:opacity-80 hover:scale-[1.02] ${state.selectedTagId === tag.id ? 'ring-2 ring-gray-900' : ''}" 
-              style="background: ${tag.color}; color: white;"
-              data-tag-id="${tag.id}">${tag.name}</span>
-        <button class="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200 edit-tag-btn" data-tag-id="${tag.id}">编辑</button>
-        <button class="px-2 py-1 bg-red-500 text-white rounded text-xs font-medium cursor-pointer hover:bg-red-600 transition-all duration-200 delete-tag-btn" data-tag-id="${tag.id}">删除</button>
-      </div>
-    `).join('')}
+    ${state.tags.map(tag => {
+      if (state.editingTagId === tag.id) {
+        return renderEditingTag(tag);
+      }
+      return `
+        <div class="flex items-center gap-2 mb-2" data-tag-id="${tag.id}">
+          <span class="px-3.5 py-1.5 rounded-full text-sm cursor-pointer transition-all duration-200 select-none hover:opacity-80 hover:scale-[1.02] ${state.selectedTagId === tag.id ? 'ring-2 ring-gray-900' : ''}" 
+                style="background: ${tag.color}; color: white;"
+                data-tag-id="${tag.id}"
+                title="双击编辑">${tag.name}</span>
+          <button class="px-2 py-1 bg-red-500 text-white rounded text-xs font-medium cursor-pointer hover:bg-red-600 transition-all duration-200 delete-tag-btn" data-tag-id="${tag.id}">删除</button>
+        </div>
+      `;
+    }).join('')}
   `;
   
   container.querySelectorAll('[data-tag-id]').forEach(el => {
     if (el.tagName === 'SPAN') {
-      el.addEventListener('click', () => {
-        state.selectedTagId = el.dataset.tagId || null;
-        renderAll();
-      });
+      el.addEventListener('click', (e) => handleTagClick(el.dataset.tagId, e));
     }
-  });
-  
-  container.querySelectorAll('.edit-tag-btn').forEach(el => {
-    el.addEventListener('click', () => openEditTagModal(el.dataset.tagId));
   });
   
   container.querySelectorAll('.delete-tag-btn').forEach(el => {
@@ -679,36 +803,11 @@ function openAddTagModal() {
       <label class="block text-sm font-medium mb-1.5 text-gray-700">标签名称</label>
       <input type="text" id="tagName" placeholder="输入标签名称" required class="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:ring-opacity-20 transition-all duration-200">
     </div>
-    <div class="mb-4">
-      <label class="block text-sm font-medium mb-1.5 text-gray-700">标签颜色</label>
-      <div class="flex gap-2 flex-wrap">
-        ${DEFAULT_TAG_COLORS.map(color => `
-          <label class="cursor-pointer">
-            <input type="radio" name="tagColor" value="${color}" class="hidden" ${color === DEFAULT_TAG_COLORS[0] ? 'checked' : ''}>
-            <span class="block w-8 h-8 rounded-full border-3 border-transparent" style="background: ${color};"></span>
-          </label>
-        `).join('')}
-      </div>
-    </div>
     <div class="flex justify-end gap-3 pt-5 border-t border-gray-200">
       <button class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200" id="cancelModalBtn">取消</button>
       <button class="px-5 py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-600 transition-all duration-200" id="saveTagBtn">保存</button>
     </div>
   `);
-  
-  const tagColorRadios = document.querySelectorAll('input[name="tagColor"]');
-  tagColorRadios.forEach(radio => {
-    radio.addEventListener('change', () => {
-      document.querySelectorAll('input[name="tagColor"]').forEach(r => {
-        if (r.nextElementSibling) {
-          r.nextElementSibling.style.borderColor = r.checked ? '#111827' : 'transparent';
-        }
-      });
-    });
-    if (radio.nextElementSibling) {
-      radio.nextElementSibling.style.borderColor = radio.checked ? '#111827' : 'transparent';
-    }
-  });
   
   const cancelModalBtn = document.getElementById('cancelModalBtn');
   if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
@@ -719,7 +818,7 @@ function openAddTagModal() {
 
 async function handleSaveNewTag() {
   const name = document.getElementById('tagName').value.trim();
-  const color = document.querySelector('input[name="tagColor"]:checked')?.value || DEFAULT_TAG_COLORS[0];
+  const color = getColorForTagName(name);
   
   if (!name) {
     showToast('请输入标签名称', 'error');
@@ -806,9 +905,29 @@ async function handleSaveEditTag() {
   }
 }
 
+let isDeletingTag = false;
+
 async function handleDeleteTag(tagId) {
-  const confirmed = await showConfirm('确定要删除这个标签吗？该标签将从所有页面中移除。');
+  if (isDeletingTag) return;
+  
+  const tag = state.tags.find(t => t.id === tagId);
+  if (!tag) {
+    showToast('标签不存在', 'error');
+    return;
+  }
+  
+  const pageCount = state.pages.filter(p => p.tags.includes(tagId)).length;
+  let confirmMessage = `确定要删除标签「${tag.name}」吗？`;
+  if (pageCount > 0) {
+    confirmMessage += `\n\n该标签关联了 ${pageCount} 个页面，删除后将从这些页面中移除。`;
+  } else {
+    confirmMessage += '\n\n该标签未关联任何页面。';
+  }
+  
+  const confirmed = await showConfirm(confirmMessage);
   if (!confirmed) return;
+  
+  isDeletingTag = true;
   
   try {
     await deleteTag(tagId);
@@ -817,10 +936,16 @@ async function handleDeleteTag(tagId) {
       state.selectedTagId = null;
     }
     renderAll();
-    showToast('标签已删除', 'success');
+    
+    const successMessage = pageCount > 0 
+      ? `标签「${tag.name}」已删除，已从 ${pageCount} 个页面中移除` 
+      : `标签「${tag.name}」已删除`;
+    showToast(successMessage, 'success');
   } catch (error) {
     console.error('Failed to delete tag:', error);
     showToast('删除失败', 'error');
+  } finally {
+    isDeletingTag = false;
   }
 }
 

@@ -1,6 +1,19 @@
-import { initStorage, getTags, getGroups, addPage, addTag } from '../lib/storage.js';
+import { initStorage, getTags, getGroups, addPage, addTag, addGroup } from '../lib/storage.js';
 import { getFaviconUrl, showToast } from '../lib/utils.js';
 import { DEFAULT_TAG_COLORS } from '../lib/constants.js';
+
+function getColorForTagName(tagName) {
+  if (!tagName || tagName.trim() === '') {
+    return DEFAULT_TAG_COLORS[0];
+  }
+  
+  const hash = tagName.trim().toLowerCase().split('').reduce((acc, char) => {
+    return acc + char.charCodeAt(0);
+  }, 0);
+  
+  const colorIndex = hash % DEFAULT_TAG_COLORS.length;
+  return DEFAULT_TAG_COLORS[colorIndex];
+}
 
 let currentTab = null;
 let selectedTagIds = [];
@@ -65,7 +78,7 @@ async function renderTags() {
   }
 }
 
-async function renderGroups() {
+async function renderGroups(selectedGroupId = null) {
   try {
     const groups = await getGroups();
     const select = document.getElementById('groupSelect');
@@ -75,6 +88,9 @@ async function renderGroups() {
       const option = document.createElement('option');
       option.value = group.id;
       option.textContent = group.name;
+      if (selectedGroupId === group.id) {
+        option.selected = true;
+      }
       select.appendChild(option);
     });
   } catch (error) {
@@ -109,7 +125,7 @@ async function handleAddTag() {
   }
   
   try {
-    const color = DEFAULT_TAG_COLORS[Math.floor(Math.random() * DEFAULT_TAG_COLORS.length)];
+    const color = getColorForTagName(name);
     await addTag({ name, color });
     input.value = '';
     await renderTags();
@@ -117,6 +133,26 @@ async function handleAddTag() {
   } catch (error) {
     console.error('Failed to add tag:', error);
     showToast('添加标签失败', 'error');
+  }
+}
+
+async function handleAddGroup() {
+  const input = document.getElementById('newGroupInput');
+  const name = input.value.trim();
+  
+  if (!name) {
+    showToast('请输入分组名称', 'error');
+    return;
+  }
+  
+  try {
+    const newGroup = await addGroup({ name });
+    input.value = '';
+    await renderGroups(newGroup.id);
+    showToast('分组添加成功', 'success');
+  } catch (error) {
+    console.error('Failed to add group:', error);
+    showToast('添加分组失败', 'error');
   }
 }
 
@@ -163,6 +199,16 @@ function bindEvents() {
   if (newTagInput) newTagInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
       handleAddTag();
+    }
+  });
+  
+  const addGroupBtn = document.getElementById('addGroupBtn');
+  if (addGroupBtn) addGroupBtn.addEventListener('click', handleAddGroup);
+  
+  const newGroupInput = document.getElementById('newGroupInput');
+  if (newGroupInput) newGroupInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      handleAddGroup();
     }
   });
   
