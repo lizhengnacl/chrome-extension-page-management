@@ -26,20 +26,7 @@ import {
   readJsonFile,
   getFaviconUrl
 } from '../lib/utils.js';
-import { DEFAULT_TAG_COLORS } from '../lib/constants.js';
-
-function getColorForTagName(tagName) {
-  if (!tagName || tagName.trim() === '') {
-    return DEFAULT_TAG_COLORS[0];
-  }
-  
-  const hash = tagName.trim().toLowerCase().split('').reduce((acc, char) => {
-    return acc + char.charCodeAt(0);
-  }, 0);
-  
-  const colorIndex = hash % DEFAULT_TAG_COLORS.length;
-  return DEFAULT_TAG_COLORS[colorIndex];
-}
+import { generateColorFromTagName } from '../lib/colors.js';
 
 let state = {
   pages: [],
@@ -50,7 +37,8 @@ let state = {
   editingPageId: null,
   editingGroupId: null,
   editingTagId: null,
-  draggedPageId: null
+  draggedPageId: null,
+  isSidebarCollapsed: false
 };
 
 let lastTagClickTime = 0;
@@ -88,9 +76,25 @@ async function loadData() {
 }
 
 function renderAll() {
+  renderSidebar();
   renderFavorites();
-  renderTags();
   renderGroups();
+}
+
+function renderSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  if (state.isSidebarCollapsed) {
+    sidebar.classList.add('collapsed');
+  } else {
+    sidebar.classList.remove('collapsed');
+  }
+  
+  renderTags();
+}
+
+function toggleSidebarCollapse() {
+  state.isSidebarCollapsed = !state.isSidebarCollapsed;
+  renderSidebar();
 }
 
 function renderFavorites() {
@@ -125,17 +129,17 @@ function renderEditingTag(tag) {
       <div class="flex items-center gap-2 flex-1">
         <input type="text" 
                value="${tag.name}" 
-               class="flex-1 px-3 py-1.5 rounded-full text-sm outline-none border-2 border-blue-500 bg-white text-gray-900 shadow-sm transition-all duration-200"
+               class="flex-1 px-3 py-1.5 rounded-lg text-sm outline-none border-2 border-blue-500 bg-white text-gray-900 shadow-sm transition-all duration-200"
                data-tag-id="${tag.id}"
                id="editTagInput"
                tabindex="0"
                autofocus>
         <div class="flex gap-1">
-          <button class="px-3 py-1 bg-green-500 text-white rounded-full text-xs font-medium cursor-pointer hover:bg-green-600 transition-all duration-200 shadow-sm save-edit-btn" 
+          <button class="px-3 py-1 bg-green-500 text-white rounded-lg text-xs font-medium cursor-pointer hover:bg-green-600 transition-all duration-200 shadow-sm save-edit-btn" 
                   data-tag-id="${tag.id}" 
                   title="保存 (Enter)"
                   tabindex="1">✓ 保存</button>
-          <button class="px-3 py-1 bg-gray-500 text-white rounded-full text-xs font-medium cursor-pointer hover:bg-gray-600 transition-all duration-200 shadow-sm cancel-edit-btn" 
+          <button class="px-3 py-1 bg-gray-500 text-white rounded-lg text-xs font-medium cursor-pointer hover:bg-gray-600 transition-all duration-200 shadow-sm cancel-edit-btn" 
                   data-tag-id="${tag.id}" 
                   title="取消 (Esc)"
                   tabindex="2">✕ 取消</button>
@@ -228,27 +232,37 @@ function renderTags() {
     return;
   }
   
-  container.innerHTML = `
+  let html = '';
+  
+  html += `
     <div class="flex items-center gap-2 mb-2">
-      <span class="px-3.5 py-1.5 rounded-full text-sm cursor-pointer transition-all duration-200 select-none hover:opacity-80 hover:scale-[1.02] ${!state.selectedTagId ? 'ring-2 ring-gray-900' : ''}" 
-            style="background: #e5e7eb; color: #374151;"
-            data-tag-id="">全部</span>
+      <span class="tag-name flex-1 px-3 py-2 rounded-lg text-sm cursor-pointer transition-all duration-200 hover:bg-gray-100 ${!state.selectedTagId ? 'bg-gray-100 ring-2 ring-blue-500' : ''}" 
+            style="border-left: 4px solid #9ca3af;"
+            data-tag-id=""
+            title="显示全部">全部</span>
     </div>
-    ${state.tags.map(tag => {
-      if (state.editingTagId === tag.id) {
-        return renderEditingTag(tag);
-      }
-      return `
-        <div class="flex items-center gap-2 mb-2" data-tag-id="${tag.id}">
-          <span class="px-3.5 py-1.5 rounded-full text-sm cursor-pointer transition-all duration-200 select-none hover:opacity-80 hover:scale-[1.02] ${state.selectedTagId === tag.id ? 'ring-2 ring-gray-900' : ''}" 
-                style="background: ${tag.color}; color: white;"
-                data-tag-id="${tag.id}"
-                title="双击编辑">${tag.name}</span>
-          <button class="px-2 py-1 bg-red-500 text-white rounded text-xs font-medium cursor-pointer hover:bg-red-600 transition-all duration-200 delete-tag-btn" data-tag-id="${tag.id}">删除</button>
-        </div>
-      `;
-    }).join('')}
   `;
+  
+  html += state.tags.map(tag => {
+    if (state.editingTagId === tag.id) {
+      return renderEditingTag(tag);
+    }
+    return `
+      <div class="flex items-center gap-2 mb-2" data-tag-id="${tag.id}">
+        <span class="tag-name flex-1 px-3 py-2 rounded-lg text-sm cursor-pointer transition-all duration-200 hover:bg-gray-100 ${state.selectedTagId === tag.id ? 'bg-gray-100 ring-2 ring-blue-500' : ''}" 
+              style="border-left: 4px solid ${tag.color};"
+              data-tag-id="${tag.id}"
+              title="双击编辑">${tag.name}</span>
+        <button class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors delete-tag-btn" data-tag-id="${tag.id}" title="删除标签">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          </svg>
+        </button>
+      </div>
+    `;
+  }).join('');
+  
+  container.innerHTML = html;
   
   container.querySelectorAll('[data-tag-id]').forEach(el => {
     if (el.tagName === 'SPAN') {
@@ -818,7 +832,7 @@ function openAddTagModal() {
 
 async function handleSaveNewTag() {
   const name = document.getElementById('tagName').value.trim();
-  const color = getColorForTagName(name);
+  const color = generateColorFromTagName(name);
   
   if (!name) {
     showToast('请输入标签名称', 'error');
@@ -1004,6 +1018,9 @@ function bindEvents() {
   const addTagBtn = document.getElementById('addTagBtn');
   if (addTagBtn) addTagBtn.addEventListener('click', openAddTagModal);
   
+  const collapseBtn = document.getElementById('collapseBtn');
+  if (collapseBtn) collapseBtn.addEventListener('click', toggleSidebarCollapse);
+  
   const exportBtn = document.getElementById('exportBtn');
   if (exportBtn) exportBtn.addEventListener('click', handleExport);
   
@@ -1023,6 +1040,8 @@ export {
   initNewtab,
   loadData,
   renderAll,
+  renderSidebar,
+  toggleSidebarCollapse,
   renderFavorites,
   renderTags,
   renderGroups,
