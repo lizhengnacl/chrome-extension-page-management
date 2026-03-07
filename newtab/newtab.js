@@ -135,14 +135,20 @@ function renderEditingTag(tag) {
                tabindex="0"
                autofocus>
         <div class="flex gap-1">
-          <button class="px-3 py-1 bg-green-500 text-white rounded-lg text-xs font-medium cursor-pointer hover:bg-green-600 transition-all duration-200 shadow-sm save-edit-btn" 
+          <button class="px-3 py-1 bg-green-500 text-white rounded-lg text-xs font-medium cursor-pointer hover:bg-green-600 transition-all duration-200 shadow-sm save-edit-btn flex items-center gap-1" 
                   data-tag-id="${tag.id}" 
                   title="保存 (Enter)"
-                  tabindex="1">✓ 保存</button>
-          <button class="px-3 py-1 bg-gray-500 text-white rounded-lg text-xs font-medium cursor-pointer hover:bg-gray-600 transition-all duration-200 shadow-sm cancel-edit-btn" 
+                  tabindex="1">
+            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            保存
+          </button>
+          <button class="px-3 py-1 bg-gray-500 text-white rounded-lg text-xs font-medium cursor-pointer hover:bg-gray-600 transition-all duration-200 shadow-sm cancel-edit-btn flex items-center gap-1" 
                   data-tag-id="${tag.id}" 
                   title="取消 (Esc)"
-                  tabindex="2">✕ 取消</button>
+                  tabindex="2">
+            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            取消
+          </button>
         </div>
       </div>
     </div>
@@ -253,10 +259,8 @@ function renderTags() {
               style="border-left: 4px solid ${tag.color};"
               data-tag-id="${tag.id}"
               title="双击编辑">${tag.name}</span>
-        <button class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors delete-tag-btn" data-tag-id="${tag.id}" title="删除标签">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-          </svg>
+        <button class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors delete-tag-btn" data-tag-id="${tag.id}" title="删除标签">
+          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
         </button>
       </div>
     `;
@@ -320,9 +324,18 @@ function renderGroups() {
           <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200">
             <span class="text-lg font-semibold text-gray-900">${group.name}</span>
             <div class="flex gap-2">
-              <button class="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200 open-group-btn" data-group-id="${group.id}">打开全部</button>
-              <button class="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200 edit-group-btn" data-group-id="${group.id}">编辑</button>
-              <button class="px-2 py-1 bg-red-500 text-white rounded text-xs font-medium cursor-pointer hover:bg-red-600 transition-all duration-200 delete-group-btn" data-group-id="${group.id}">删除</button>
+              <button class="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200 open-group-btn flex items-center gap-1" data-group-id="${group.id}">
+                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                打开全部
+              </button>
+              <button class="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200 edit-group-btn flex items-center gap-1" data-group-id="${group.id}">
+                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                编辑
+              </button>
+              <button class="px-2 py-1 bg-red-500 text-white rounded text-xs font-medium cursor-pointer hover:bg-red-600 transition-all duration-200 delete-group-btn flex items-center gap-1" data-group-id="${group.id}">
+                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                删除
+              </button>
             </div>
           </div>
           <div class="flex flex-col gap-2" data-group-id="${group.id}">
@@ -379,17 +392,20 @@ function renderPageItem(page, isFavorite = false) {
         ` : ''}
       </div>
       <div class="flex gap-2 flex-shrink-0">
-        <button class="p-1.5 border-none bg-transparent cursor-pointer rounded text-xl hover:bg-gray-100 transition-colors duration-200 leading-none favorite-btn ${page.isFavorite ? 'text-amber-500' : ''}" 
+        <button class="p-2 border-none bg-transparent cursor-pointer rounded hover:bg-gray-100 transition-colors duration-200 leading-none favorite-btn ${page.isFavorite ? 'text-amber-500' : ''}" 
                 data-page-id="${page.id}" title="常用">
-          ⭐
+          ${page.isFavorite 
+            ? '<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
+            : '<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
+          }
         </button>
-        <button class="p-1.5 border-none bg-transparent cursor-pointer rounded text-xl hover:bg-gray-100 transition-colors duration-200 leading-none edit-page-btn" 
+        <button class="p-2 border-none bg-transparent cursor-pointer rounded hover:bg-gray-100 transition-colors duration-200 leading-none edit-page-btn" 
                 data-page-id="${page.id}" title="编辑">
-          ✏️
+          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
         </button>
-        <button class="p-1.5 border-none bg-transparent cursor-pointer rounded text-xl hover:bg-gray-100 transition-colors duration-200 leading-none delete-page-btn" 
+        <button class="p-2 border-none bg-transparent cursor-pointer rounded hover:bg-gray-100 transition-colors duration-200 leading-none delete-page-btn" 
                 data-page-id="${page.id}" title="删除">
-          🗑️
+          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
         </button>
       </div>
     </div>
@@ -604,8 +620,14 @@ function openAddPageModal() {
       <div>${tagOptions || '<p class="text-gray-500 text-sm">暂无标签</p>'}</div>
     </div>
     <div class="flex justify-end gap-3 pt-5 border-t border-gray-200">
-      <button class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200" id="cancelModalBtn">取消</button>
-      <button class="px-5 py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-600 transition-all duration-200" id="savePageBtn">保存</button>
+      <button class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200 flex items-center gap-2" id="cancelModalBtn">
+        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        取消
+      </button>
+      <button class="px-5 py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-600 transition-all duration-200 flex items-center gap-2" id="savePageBtn">
+        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        保存
+      </button>
     </div>
   `);
   
@@ -686,8 +708,14 @@ function openEditPageModal(pageId) {
       <div>${tagOptions || '<p class="text-gray-500 text-sm">暂无标签</p>'}</div>
     </div>
     <div class="flex justify-end gap-3 pt-5 border-t border-gray-200">
-      <button class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200" id="cancelModalBtn">取消</button>
-      <button class="px-5 py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-600 transition-all duration-200" id="savePageBtn">保存</button>
+      <button class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200 flex items-center gap-2" id="cancelModalBtn">
+        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        取消
+      </button>
+      <button class="px-5 py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-600 transition-all duration-200 flex items-center gap-2" id="savePageBtn">
+        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        保存
+      </button>
     </div>
   `);
   

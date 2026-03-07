@@ -29,13 +29,12 @@
         <div class="flex justify-between items-center">
           <h2 class="text-lg font-semibold text-gray-900 sidebar-title">标签</h2>
           <button id="collapseBtn" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
-            </svg>
+            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
         </div>
-        <button id="addTagBtn" class="add-tag-btn mt-3 w-full px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-600 transition-colors">
-          + 添加标签
+        <button id="addTagBtn" class="add-tag-btn mt-3 w-full px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          添加标签
         </button>
       </div>
       <div id="tagsList" class="flex-1 overflow-y-auto p-4"></div>
@@ -46,19 +45,29 @@
         <header class="flex justify-between items-center mb-10 flex-wrap gap-5">
           <h1 class="text-3xl font-bold text-gray-900">Chrome 页面管理</h1>
           <div class="flex gap-3 items-center flex-wrap">
-            <div class="flex-1 min-w-[250px]">
-              <input type="text" id="searchInput" placeholder="搜索页面..." class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:ring-opacity-20 transition-all duration-200">
+            <div class="flex-1 min-w-[250px] relative">
+              <svg class="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <input type="text" id="searchInput" placeholder="搜索页面..." class="w-full pl-11 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:ring-opacity-20 transition-all duration-200">
             </div>
-            <button id="addPageBtn" class="px-5 py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-600 transition-all duration-200 whitespace-nowrap">添加页面</button>
-            <button id="exportBtn" class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200 whitespace-nowrap">导出</button>
+            <button id="addPageBtn" class="px-5 py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-600 transition-all duration-200 whitespace-nowrap flex items-center gap-2">
+              <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+              添加页面
+            </button>
+            <button id="exportBtn" class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200 whitespace-nowrap flex items-center gap-2">
+              <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+              导出
+            </button>
             <input type="file" id="importInput" accept=".json" class="hidden">
-            <button id="importBtn" class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200 whitespace-nowrap">导入</button>
+            <button id="importBtn" class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200 whitespace-nowrap flex items-center gap-2">
+              <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+              导入
+            </button>
           </div>
         </header>
 
         <section class="mb-8" id="favoritesSection">
           <h2 class="text-xl font-semibold mb-4 text-gray-900 flex items-center gap-2">
-            <span class="text-2xl">⭐</span>
+            <svg class="w-6 h-6 text-amber-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             常用页面
           </h2>
           <div id="favoritesList" class="flex flex-col gap-2"></div>
@@ -67,10 +76,13 @@
         <section class="mb-8" id="groupsSection">
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
-              <span class="text-2xl">📁</span>
+              <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
               分组
             </h2>
-            <button id="addGroupBtn" class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200">+ 添加分组</button>
+            <button id="addGroupBtn" class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200 flex items-center gap-2">
+              <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+              添加分组
+            </button>
           </div>
           <div id="groupsList" class="flex flex-col gap-6"></div>
         </section>

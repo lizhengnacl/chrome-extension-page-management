@@ -25,7 +25,10 @@
       <div id="tagsContainer" class="flex flex-wrap gap-2 mb-3 min-h-[32px]"></div>
       <div class="flex gap-2">
         <input type="text" id="newTagInput" placeholder="输入新标签名称" class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:ring-opacity-20 transition-all duration-200">
-        <button id="addTagBtn" class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200">添加标签</button>
+        <button id="addTagBtn" class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200 flex items-center gap-2">
+          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          添加标签
+        </button>
       </div>
     </div>
 
@@ -36,11 +39,17 @@
       </select>
       <div class="flex gap-2">
         <input type="text" id="newGroupInput" placeholder="输入新分组名称" class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:ring-opacity-20 transition-all duration-200">
-        <button id="addGroupBtn" class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200">添加分组</button>
+        <button id="addGroupBtn" class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-300 transition-all duration-200 flex items-center gap-2">
+          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          添加分组
+        </button>
       </div>
     </div>
 
-    <button id="addPageBtn" class="w-full py-2.5 px-5 bg-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-600 transition-all duration-200">添加页面</button>
+    <button id="addPageBtn" class="w-full py-2.5 px-5 bg-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-600 transition-all duration-200 flex items-center justify-center gap-2">
+      <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      添加页面
+    </button>
   </div>
 
   <script type="module" src="popup.js"></script>
