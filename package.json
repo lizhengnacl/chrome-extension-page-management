@@ -1,23 +1,31 @@
 {
   "name": "chrome-extension-page-management",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "一个简单高效的 Chrome 页面管理工具，让您轻松组织和管理常用网页。",
-  "main": "index.js",
-  "directories": {
-    "lib": "lib",
-    "test": "tests"
-  },
+  "type": "module",
   "scripts": {
-    "build:css": "tailwindcss -i ./src/styles.css -o ./lib/output.css --minify",
-    "watch:css": "tailwindcss -i ./src/styles.css -o ./lib/output.css --watch",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "dependencies": {
+    "@nextui-org/react": "^2.4.8",
+    "framer-motion": "^11.11.10",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
   "devDependencies": {
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.2",
     "autoprefixer": "^10.4.27",
     "postcss": "^8.5.8",
-    "tailwindcss": "3"
+    "tailwindcss": "^3.4.14",
+    "vite": "^5.4.8",
+    "vite-plugin-static-copy": "^3.2.0"
   }
 }
