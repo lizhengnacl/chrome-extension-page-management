@@ -184,7 +184,18 @@ const NewTab: React.FC = () => {
 
   // 一键打开分组所有页面
   const handleOpenGroup = async (groupId: string) => {
-    await groupStorage.openAll(groupId);
+    try {
+      const pages = await pageStorage.getByGroup(groupId);
+      if (pages.length === 0) {
+        showToast('该分组下没有页面', 'info');
+        return;
+      }
+      showToast(`正在打开 ${pages.length} 个页面...`, 'info');
+      await groupStorage.openAll(groupId);
+    } catch (error) {
+      console.error('打开分组失败:', error);
+      showToast('打开分组失败，请重试', 'error');
+    }
   };
 
   // 获取当前分组名称

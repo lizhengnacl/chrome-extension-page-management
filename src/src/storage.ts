@@ -246,14 +246,32 @@ export const groupStorage = {
     const pages = await pageStorage.getByGroup(groupId);
     if (pages.length === 0) return;
 
-    // 创建新窗口并打开所有页面
-    const window = await chrome.windows.create({ focused: false });
-    for (const page of pages) {
-      await chrome.tabs.create({
-        windowId: window.id,
-        url: page.url,
-        active: false,
+    try {
+      // 创建新窗口并打开所有页面
+      const window = await chrome.windows.create({ 
+        focused: true,
+        state: 'normal'
       });
+      
+      if (window && window.id) {
+        // 第一个页面作为活动页面
+        for (let i = 0; i < pages.length; i++) {
+          await chrome.tabs.create({
+            windowId: window.id,
+            url: pages[i].url,
+            active: i === 0,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('打开分组失败:', error);
+      // 回退方案：在当前窗口打开
+      for (const page of pages) {
+        await chrome.tabs.create({
+          url: page.url,
+          active: false,
+        });
+      }
     }
   },
 };
