@@ -13,6 +13,8 @@ import { PageListItem } from './components/PageListItem';
 import { StorageWarning } from './components/StorageWarning';
 import { TagInput } from './components/TagInput';
 import { GroupSelector } from './components/GroupSelector';
+import { ImportModal } from './components/ImportModal';
+import { ExportModal } from './components/ExportModal';
 import { pageStorage, groupStorage, tagStorage } from './storage';
 import { sortByTitle, debounce } from './utils';
 import type { Page, Group, TagNode } from './types';
@@ -45,6 +47,12 @@ const NewTab: React.FC = () => {
     id?: string;
     name?: string;
   } | null>(null);
+
+  // 导入弹窗状态
+  const [importModalOpen, setImportModalOpen] = useState(false);
+
+  // 导出弹窗状态
+  const [exportModalOpen, setExportModalOpen] = useState(false);
 
   // 初始化加载数据
   useEffect(() => {
@@ -317,6 +325,26 @@ const NewTab: React.FC = () => {
 
             {/* 右侧操作 */}
             <div className="flex items-center gap-3">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setImportModalOpen(true)}
+              >
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                导入书签
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setExportModalOpen(true)}
+              >
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                导出书签
+              </Button>
               {(searchQuery || selectedTag || selectedGroup) && (
                 <Button variant="ghost" size="sm" onClick={clearFilters}>
                   清除筛选
@@ -536,6 +564,19 @@ const NewTab: React.FC = () => {
         message={getDeleteMessage()}
         variant="danger"
         confirmText="删除"
+      />
+
+      {/* 导入弹窗 */}
+      <ImportModal
+        isOpen={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        onImportComplete={loadData}
+      />
+
+      {/* 导出弹窗 */}
+      <ExportModal
+        isOpen={exportModalOpen}
+        onClose={() => setExportModalOpen(false)}
       />
     </div>
   );
