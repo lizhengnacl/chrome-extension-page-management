@@ -335,6 +335,8 @@ export const pageStorage = {
   async deleteAll(): Promise<boolean> {
     const data = await getStorageData();
     data.pages = [];
+    // 只保留默认分组
+    data.groups = data.groups.filter(g => g.id === 'default');
     return setStorageData(data);
   },
 
