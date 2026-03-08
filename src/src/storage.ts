@@ -234,9 +234,13 @@ export const groupStorage = {
     return setStorageData(data);
   },
 
-  /** 删除分组 */
+  /** 删除分组（同时从所有页面中移除该分组） */
   async delete(id: string): Promise<boolean> {
     const data = await getStorageData();
+    // 从所有页面中移除该分组
+    data.pages.forEach(page => {
+      page.groups = page.groups.filter(gid => gid !== id);
+    });
     data.groups = data.groups.filter(g => g.id !== id);
     return setStorageData(data);
   },
@@ -336,5 +340,32 @@ export const tagStorage = {
     return allPaths.filter(path => 
       path.toLowerCase().includes(lowerPrefix)
     );
+  },
+
+  /** 删除标签（同时从所有页面中移除该标签及其子标签） */
+  async deleteTag(tagPath: string): Promise<boolean> {
+    const data = await getStorageData();
+    
+    // 递归删除标签树中的节点
+    const deleteNode = (nodes: TagNode[]): TagNode[] => {
+      return nodes.filter(node => {
+        if (node.path === tagPath || node.path.startsWith(`${tagPath}/`)) {
+          return false;
+        }
+        node.children = deleteNode(node.children);
+        return true;
+      });
+    };
+    
+    data.tags = deleteNode(data.tags);
+    
+    // 从所有页面中移除该标签及其子标签
+    data.pages.forEach(page => {
+      page.tags = page.tags.filter(tag => 
+        tag !== tagPath && !tag.startsWith(`${tagPath}/`)
+      );
+    });
+    
+    return setStorageData(data);
   },
 };

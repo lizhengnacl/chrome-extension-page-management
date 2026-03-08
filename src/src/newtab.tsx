@@ -40,6 +40,11 @@ const NewTab: React.FC = () => {
   // 删除确认弹窗
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletingPageId, setDeletingPageId] = useState<string>('');
+  const [deleteConfirmData, setDeleteConfirmData] = useState<{
+    type: 'page' | 'group' | 'tag';
+    id?: string;
+    name?: string;
+  } | null>(null);
 
   // 初始化加载数据
   useEffect(() => {
@@ -155,22 +160,86 @@ const NewTab: React.FC = () => {
     }
   };
 
-  // 处理删除
+  // 处理删除页面
   const handleDelete = (pageId: string) => {
-    setDeletingPageId(pageId);
+    const page = pages.find(p => p.id === pageId);
+    setDeleteConfirmData({
+      type: 'page',
+      id: pageId,
+      name: page?.title
+    });
+    setDeleteModalOpen(true);
+  };
+
+  // 处理删除分组
+  const handleDeleteGroup = (groupId: string) => {
+    const group = groups.find(g => g.id === groupId);
+    if (group?.id === 'default') {
+      showToast('默认分组不能删除', 'error');
+      return;
+    }
+    setDeleteConfirmData({
+      type: 'group',
+      id: groupId,
+      name: group?.name
+    });
+    setDeleteModalOpen(true);
+  };
+
+  // 处理删除标签
+  const handleDeleteTag = (tagPath: string) => {
+    setDeleteConfirmData({
+      type: 'tag',
+      id: tagPath,
+      name: tagPath
+    });
     setDeleteModalOpen(true);
   };
 
   // 确认删除
   const confirmDelete = async () => {
-    const success = await pageStorage.delete(deletingPageId);
+    if (!deleteConfirmData) return;
+    
+    let success = false;
+    
+    if (deleteConfirmData.type === 'page' && deleteConfirmData.id) {
+      success = await pageStorage.delete(deleteConfirmData.id);
+    } else if (deleteConfirmData.type === 'group' && deleteConfirmData.id) {
+      success = await groupStorage.delete(deleteConfirmData.id);
+      if (success && selectedGroup === deleteConfirmData.id) {
+        setSelectedGroup('');
+      }
+    } else if (deleteConfirmData.type === 'tag' && deleteConfirmData.id) {
+      success = await tagStorage.deleteTag(deleteConfirmData.id);
+      if (success && selectedTag === deleteConfirmData.id) {
+        setSelectedTag('');
+      }
+    }
+    
     if (success) {
       showToast('删除成功', 'success');
       setDeleteModalOpen(false);
+      setDeleteConfirmData(null);
       loadData();
     } else {
       showToast('删除失败', 'error');
     }
+  };
+
+  // 获取删除确认消息
+  const getDeleteMessage = () => {
+    if (!deleteConfirmData) {
+      return '确定要删除吗？此操作不可恢复。';
+    }
+    
+    if (deleteConfirmData.type === 'page') {
+      return `确定要删除页面"${deleteConfirmData.name}"吗？此操作不可恢复。`;
+    } else if (deleteConfirmData.type === 'group') {
+      return `确定要删除分组"${deleteConfirmData.name}"吗？该分组下的页面不会被删除，但会从该分组中移除。`;
+    } else if (deleteConfirmData.type === 'tag') {
+      return `确定要删除标签"${deleteConfirmData.name}"吗？该标签及其子标签将从所有页面中移除。`;
+    }
+    return '确定要删除吗？此操作不可恢复。';
   };
 
   // 从分组中移除
@@ -280,23 +349,40 @@ const NewTab: React.FC = () => {
               </div>
               <div className="p-2 max-h-64 overflow-y-auto">
                 {groups.map(group => (
-                  <button
-                    key={group.id}
-                    onClick={() => setSelectedGroup(selectedGroup === group.id ? '' : group.id)}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors ${
+                  <div key={group.id} className="group/item">
+                    <div className={`flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors ${
                       selectedGroup === group.id
                         ? 'bg-blue-50 text-blue-700'
                         : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2 truncate">
-                      <span className="w-2 h-2 rounded-full bg-blue-400"></span>
-                      {group.name}
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      {pages.filter(p => p.groups.includes(group.id)).length}
-                    </span>
-                  </button>
+                    }`}>
+                      <button
+                        onClick={() => setSelectedGroup(selectedGroup === group.id ? '' : group.id)}
+                        className="flex items-center gap-2 truncate flex-1 text-left"
+                      >
+                        <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                        {group.name}
+                      </button>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-gray-400">
+                          {pages.filter(p => p.groups.includes(group.id)).length}
+                        </span>
+                        {group.id !== 'default' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteGroup(group.id);
+                            }}
+                            className="opacity-0 group-hover/item:opacity-100 p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-all"
+                            title="删除分组"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
               {selectedGroup && (
@@ -331,6 +417,7 @@ const NewTab: React.FC = () => {
                   nodes={tags}
                   onTagClick={tagPath => setSelectedTag(selectedTag === tagPath ? '' : tagPath)}
                   selectedTag={selectedTag}
+                  onDeleteTag={handleDeleteTag}
                 />
               </div>
             </div>
@@ -440,10 +527,13 @@ const NewTab: React.FC = () => {
       {/* 删除确认弹窗 */}
       <ConfirmModal
         isOpen={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setDeleteConfirmData(null);
+        }}
         onConfirm={confirmDelete}
         title="确认删除"
-        message="确定要删除这个收藏的页面吗？此操作不可恢复。"
+        message={getDeleteMessage()}
         variant="danger"
         confirmText="删除"
       />

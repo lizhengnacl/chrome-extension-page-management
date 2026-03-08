@@ -10,6 +10,7 @@ interface TagTreeProps {
   nodes: TagNode[];
   onTagClick: (tagPath: string) => void;
   selectedTag?: string;
+  onDeleteTag?: (tagPath: string) => void;
 }
 
 interface TagNodeItemProps {
@@ -17,6 +18,7 @@ interface TagNodeItemProps {
   onTagClick: (tagPath: string) => void;
   selectedTag?: string;
   level: number;
+  onDeleteTag?: (tagPath: string) => void;
 }
 
 const TagNodeItem: React.FC<TagNodeItemProps> = ({
@@ -24,17 +26,17 @@ const TagNodeItem: React.FC<TagNodeItemProps> = ({
   onTagClick,
   selectedTag,
   level,
+  onDeleteTag,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const hasChildren = node.children.length > 0;
   const isSelected = selectedTag === node.path;
 
   return (
-    <div className="select-none">
-      <button
-        type="button"
-        onClick={() => onTagClick(node.path)}
-        className={`w-full flex items-center gap-1 px-2 py-1.5 text-sm rounded-md transition-colors ${
+    <div className="select-none" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+      <div
+        className={`flex items-center gap-1 px-2 py-1.5 text-sm rounded-md transition-colors ${
           isSelected
             ? 'bg-blue-100 text-blue-700'
             : 'text-gray-700 hover:bg-gray-100'
@@ -61,11 +63,32 @@ const TagNodeItem: React.FC<TagNodeItemProps> = ({
           </button>
         )}
         {!hasChildren && <span className="w-4" />}
-        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-        </svg>
-        <span className="truncate">{node.name}</span>
-      </button>
+        <button
+          type="button"
+          onClick={() => onTagClick(node.path)}
+          className="flex items-center gap-1 flex-1 text-left"
+        >
+          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+          <span className="truncate">{node.name}</span>
+        </button>
+        {onDeleteTag && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteTag(node.path);
+            }}
+            className={`p-0.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-all ${isHovered ? 'opacity-100' : 'opacity-0'}`}
+            title="删除标签"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        )}
+      </div>
 
       {/* 子节点 */}
       {hasChildren && isExpanded && (
@@ -77,6 +100,7 @@ const TagNodeItem: React.FC<TagNodeItemProps> = ({
               onTagClick={onTagClick}
               selectedTag={selectedTag}
               level={level + 1}
+              onDeleteTag={onDeleteTag}
             />
           ))}
         </div>
@@ -89,6 +113,7 @@ export const TagTree: React.FC<TagTreeProps> = ({
   nodes,
   onTagClick,
   selectedTag,
+  onDeleteTag,
 }) => {
   if (nodes.length === 0) {
     return (
@@ -107,6 +132,7 @@ export const TagTree: React.FC<TagTreeProps> = ({
           onTagClick={onTagClick}
           selectedTag={selectedTag}
           level={0}
+          onDeleteTag={onDeleteTag}
         />
       ))}
     </div>
