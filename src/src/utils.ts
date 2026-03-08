@@ -99,3 +99,44 @@ export function uniqueArray<T>(arr: T[]): T[] {
 export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+/**
+ * 规范化URL用于比较
+ * 移除末尾斜杠、统一小写等，但保留path、query、hash的差异
+ */
+export function normalizeUrlForComparison(url: string): string {
+  try {
+    const urlObj = new URL(url);
+    
+    // 移除末尾的斜杠（根路径除外）
+    if (urlObj.pathname.length > 1 && urlObj.pathname.endsWith('/')) {
+      urlObj.pathname = urlObj.pathname.slice(0, -1);
+    }
+    
+    // 移除默认端口
+    if ((urlObj.protocol === 'http:' && urlObj.port === '80') ||
+        (urlObj.protocol === 'https:' && urlObj.port === '443')) {
+      urlObj.port = '';
+    }
+    
+    // 排序查询参数（可选，让参数顺序不影响比较）
+    const params = new URLSearchParams(urlObj.searchParams);
+    params.sort();
+    urlObj.search = params.toString() ? `?${params.toString()}` : '';
+    
+    return urlObj.href;
+  } catch {
+    // 如果URL解析失败，返回原URL
+    return url;
+  }
+}
+
+/**
+ * 判断两个URL是否视为同一页面
+ * 完整比较：包括path、query、hash的差异
+ */
+export function isSamePage(url1: string, url2: string): boolean {
+  const normalized1 = normalizeUrlForComparison(url1);
+  const normalized2 = normalizeUrlForComparison(url2);
+  return normalized1 === normalized2;
+}

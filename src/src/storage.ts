@@ -5,6 +5,7 @@
  */
 
 import type { Page, Group, TagNode, StorageData, StorageUsage } from './types';
+import { isSamePage } from './utils';
 
 const STORAGE_KEY = 'pageManager_data';
 const SYNC_STORAGE_LIMIT = 100 * 1024; // 100KB
@@ -88,17 +89,26 @@ export const pageStorage = {
     return data.pages.find(p => p.id === id);
   },
 
+  /**
+   * 检查是否存在重复页面
+   * 重复判断标准：同一页面（考虑path、query、hash差异）在同一分组内已存在
+   */
+  async checkDuplicate(url: string, groups: string[]): Promise<boolean> {
+    const data = await getStorageData();
+    return data.pages.some(page => 
+      isSamePage(page.url, url) && 
+      page.groups.some(groupId => groups.includes(groupId))
+    );
+  },
+
   /** 添加页面 */
   async add(page: Omit<Page, 'id' | 'createdAt' | 'updatedAt'>): Promise<Page | null> {
     const data = await getStorageData();
     
-    // 检查同一URL在同一分组内是否已存在
-    const existingInSameGroup = data.pages.find(p => 
-      p.url === page.url && 
-      p.groups.some(g => page.groups.includes(g))
-    );
+    // 检查是否存在重复
+    const isDuplicate = await this.checkDuplicate(page.url, page.groups);
     
-    if (existingInSameGroup) {
+    if (isDuplicate) {
       return null; // 已存在，返回null表示失败
     }
 
