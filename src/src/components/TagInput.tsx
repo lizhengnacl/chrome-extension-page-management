@@ -3,7 +3,7 @@
  * 支持多级标签路径输入和自动补全
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { tagStorage } from '../storage';
 
 interface TagInputProps {
@@ -12,17 +12,31 @@ interface TagInputProps {
   placeholder?: string;
 }
 
-export const TagInput: React.FC<TagInputProps> = ({
+export interface TagInputRef {
+  flushInput: () => void;
+}
+
+export const TagInput = React.forwardRef<TagInputRef, TagInputProps>(({
   value,
   onChange,
   placeholder = '输入标签，如：技术/AI/大模型',
-}) => {
+}, ref) => {
   const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const flushInput = useCallback(() => {
+    if (inputValue.trim()) {
+      addTag(inputValue);
+    }
+  }, [inputValue, value]);
+
+  React.useImperativeHandle(ref, () => ({
+    flushInput,
+  }));
 
   // 加载标签建议
   useEffect(() => {
@@ -111,6 +125,7 @@ export const TagInput: React.FC<TagInputProps> = ({
           value={inputValue}
           onChange={e => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
+          onBlur={flushInput}
           onFocus={() => inputValue.trim() && suggestions.length > 0 && setShowSuggestions(true)}
           placeholder={value.length === 0 ? placeholder : ''}
           className="flex-1 min-w-[120px] bg-transparent border-none focus:outline-none text-sm text-gray-900 placeholder-gray-400"
@@ -141,8 +156,9 @@ export const TagInput: React.FC<TagInputProps> = ({
       )}
 
       <p className="mt-1 text-xs text-gray-500">
-        输入技术/AI/大模型格式创建多级标签，按回车添加
+        输入技术/AI/大模型格式创建多级标签，按回车或点击保存添加
       </p>
     </div>
   );
-};
+});
+TagInput.displayName = 'TagInput';

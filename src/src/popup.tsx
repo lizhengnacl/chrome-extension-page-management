@@ -3,11 +3,11 @@
  * 用于收藏当前页面，支持多级标签和多归属分组
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from './components/ui/Button';
 import { Input } from './components/ui/Input';
 import { Toast, showToast } from './components/ui/Toast';
-import { TagInput } from './components/TagInput';
+import { TagInput, type TagInputRef } from './components/TagInput';
 import { GroupSelector } from './components/GroupSelector';
 import { StorageWarning } from './components/StorageWarning';
 import { pageStorage, groupStorage, getStorageUsage } from './storage';
@@ -24,6 +24,7 @@ const Popup: React.FC = () => {
     tags: [] as string[],
     groups: [] as string[],
   });
+  const tagInputRef = useRef<TagInputRef>(null);
 
   // 初始化：获取当前页面信息
   useEffect(() => {
@@ -48,6 +49,8 @@ const Popup: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    tagInputRef.current?.flushInput();
     
     if (!formData.url || !formData.title) {
       showToast('请填写完整信息', 'error');
@@ -152,6 +155,7 @@ const Popup: React.FC = () => {
             标签
           </label>
           <TagInput
+            ref={tagInputRef}
             value={formData.tags}
             onChange={tags => setFormData(prev => ({ ...prev, tags }))}
           />

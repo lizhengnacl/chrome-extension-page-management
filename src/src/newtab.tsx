@@ -3,7 +3,7 @@
  * 页面管理主界面，支持列表展示、搜索、筛选、编辑等操作
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from './components/ui/Button';
 import { Input } from './components/ui/Input';
 import { Modal, ConfirmModal } from './components/ui/Modal';
@@ -11,7 +11,7 @@ import { Toast, showToast } from './components/ui/Toast';
 import { TagTree } from './components/TagTree';
 import { PageListItem } from './components/PageListItem';
 import { StorageWarning } from './components/StorageWarning';
-import { TagInput } from './components/TagInput';
+import { TagInput, type TagInputRef } from './components/TagInput';
 import { GroupSelector } from './components/GroupSelector';
 import { ImportModal } from './components/ImportModal';
 import { ExportModal } from './components/ExportModal';
@@ -24,6 +24,7 @@ const NewTab: React.FC = () => {
   const [pages, setPages] = useState<Page[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [tags, setTags] = useState<TagNode[]>([]);
+  const tagInputRef = useRef<TagInputRef>(null);
   
   // 筛选状态
   const [searchQuery, setSearchQuery] = useState('');
@@ -167,6 +168,8 @@ const NewTab: React.FC = () => {
   // 保存编辑
   const handleSaveEdit = async () => {
     if (!editingPage) return;
+
+    tagInputRef.current?.flushInput();
 
     const success = await pageStorage.update(editingPage.id, {
       title: editForm.title,
@@ -778,6 +781,7 @@ const NewTab: React.FC = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">标签</label>
             <TagInput
+              ref={tagInputRef}
               value={editForm.tags}
               onChange={tags => setEditForm(prev => ({ ...prev, tags }))}
             />
