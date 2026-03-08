@@ -6,11 +6,8 @@
   "permissions": [
     "storage",
     "tabs",
-    "bookmarks",
-    "activeTab",
-    "contextMenus"
+    "bookmarks"
   ],
-  "optional_permissions": [],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
