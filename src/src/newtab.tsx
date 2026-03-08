@@ -43,7 +43,7 @@ const NewTab: React.FC = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletingPageId, setDeletingPageId] = useState<string>('');
   const [deleteConfirmData, setDeleteConfirmData] = useState<{
-    type: 'page' | 'group' | 'tag';
+    type: 'page' | 'group' | 'tag' | 'all';
     id?: string;
     name?: string;
   } | null>(null);
@@ -204,6 +204,15 @@ const NewTab: React.FC = () => {
     setDeleteModalOpen(true);
   };
 
+  // 处理删除所有页面
+  const handleDeleteAll = () => {
+    setDeleteConfirmData({
+      type: 'all',
+      name: '所有页面'
+    });
+    setDeleteModalOpen(true);
+  };
+
   // 确认删除
   const confirmDelete = async () => {
     if (!deleteConfirmData) return;
@@ -222,6 +231,8 @@ const NewTab: React.FC = () => {
       if (success && selectedTag === deleteConfirmData.id) {
         setSelectedTag('');
       }
+    } else if (deleteConfirmData.type === 'all') {
+      success = await pageStorage.deleteAll();
     }
     
     if (success) {
@@ -246,6 +257,8 @@ const NewTab: React.FC = () => {
       return `确定要删除分组"${deleteConfirmData.name}"吗？该分组下的页面不会被删除，但会从该分组中移除。`;
     } else if (deleteConfirmData.type === 'tag') {
       return `确定要删除标签"${deleteConfirmData.name}"吗？该标签及其子标签将从所有页面中移除。`;
+    } else if (deleteConfirmData.type === 'all') {
+      return '确定要删除所有收藏的页面吗？此操作不可恢复，且不会影响浏览器书签。';
     }
     return '确定要删除吗？此操作不可恢复。';
   };
@@ -325,6 +338,19 @@ const NewTab: React.FC = () => {
 
             {/* 右侧操作 */}
             <div className="flex items-center gap-3">
+              {pages.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDeleteAll}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  删除所有
+                </Button>
+              )}
               <Button
                 variant="secondary"
                 size="sm"
