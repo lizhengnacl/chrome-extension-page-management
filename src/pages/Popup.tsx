@@ -7,6 +7,7 @@ import { GroupManager } from './GroupManager'
 import { usePages } from '@/hooks/usePages'
 import { useTags } from '@/hooks/useTags'
 import { useGroups } from '@/hooks/useGroups'
+import { useCurrentTab } from '@/hooks/useCurrentTab'
 import type { Page } from '@/types'
 
 type TabType = 'add' | 'tags' | 'groups'
@@ -16,6 +17,7 @@ export const Popup: React.FC = () => {
   const { addPage, updatePage } = usePages()
   const { tags, addTag, deleteTag } = useTags()
   const { groups, addGroup, deleteGroup } = useGroups()
+  const { currentTab, loading } = useCurrentTab()
 
   const handleAddPageSubmit = (pageData: Partial<Page>) => {
     if (pageData.id) {
@@ -86,6 +88,9 @@ export const Popup: React.FC = () => {
             tags={tags}
             onSubmit={handleAddPageSubmit}
             onCancel={handleCancel}
+            initialUrl={currentTab?.url}
+            initialTitle={currentTab?.title}
+            loading={loading}
           />
         )}
         {activeTab === 'tags' && (

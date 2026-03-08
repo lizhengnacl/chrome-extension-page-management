@@ -9,18 +9,24 @@ interface PageCardProps {
 }
 
 export const PageCard: React.FC<PageCardProps> = ({ page, onEdit, onDelete, onToggleStar }) => {
+  const starLabel = page.isStarred ? '取消星标' : '添加星标'
+  
   return (
-    <div style={{
-      backgroundColor: 'white',
-      borderRadius: 8,
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-      padding: 16,
-      marginBottom: 8
-    }}>
+    <article 
+      role="article"
+      aria-label={`页面: ${page.title}`}
+      style={{
+        backgroundColor: 'white',
+        borderRadius: 8,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        padding: 16,
+        marginBottom: 8
+      }}
+    >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
         <img
           src={page.favicon}
-          alt=""
+          alt={`${page.title} 的图标`}
           style={{
             width: 32,
             height: 32,
@@ -51,9 +57,10 @@ export const PageCard: React.FC<PageCardProps> = ({ page, onEdit, onDelete, onTo
             whiteSpace: 'nowrap'
           }}>{page.url}</p>
         </div>
-        <div style={{ display: 'flex', gap: 4 }}>
+        <div style={{ display: 'flex', gap: 4 }} role="group" aria-label="页面操作">
           <button
             data-testid="star-button"
+            aria-label={starLabel}
             onClick={() => onToggleStar(page.id)}
             style={{
               padding: 4,
@@ -71,6 +78,7 @@ export const PageCard: React.FC<PageCardProps> = ({ page, onEdit, onDelete, onTo
           </button>
           <button
             data-testid="edit-button"
+            aria-label="编辑页面"
             onClick={() => onEdit(page)}
             style={{
               padding: 4,
@@ -88,6 +96,7 @@ export const PageCard: React.FC<PageCardProps> = ({ page, onEdit, onDelete, onTo
           </button>
           <button
             data-testid="delete-button"
+            aria-label="删除页面"
             onClick={() => onDelete(page.id)}
             style={{
               padding: 4,
@@ -106,10 +115,15 @@ export const PageCard: React.FC<PageCardProps> = ({ page, onEdit, onDelete, onTo
         </div>
       </div>
       {page.tags.length > 0 && (
-        <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+        <div 
+          style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 4 }}
+          aria-label="页面标签"
+        >
           {page.tags.map((tagId: string) => (
             <span
               key={tagId}
+              role="status"
+              aria-label={`标签: ${tagId}`}
               style={{
                 padding: '2px 8px',
                 backgroundColor: '#E0E7FF',
@@ -123,6 +137,6 @@ export const PageCard: React.FC<PageCardProps> = ({ page, onEdit, onDelete, onTo
           ))}
         </div>
       )}
-    </div>
+    </article>
   )
 }
