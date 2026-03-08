@@ -91,7 +91,8 @@ interface ConfirmModalProps {
   onClose: () => void;
   onConfirm: () => void;
   title: string;
-  message: string;
+  message?: string;
+  children?: React.ReactNode;
   confirmText?: string;
   cancelText?: string;
   variant?: 'danger' | 'primary';
@@ -103,6 +104,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onConfirm,
   title,
   message,
+  children,
   confirmText = '确认',
   cancelText = '取消',
   variant = 'primary',
@@ -127,7 +129,8 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         </>
       }
     >
-      <p className="text-gray-600">{message}</p>
+      {message && <p className="text-gray-600 mb-4">{message}</p>}
+      {children}
     </Modal>
   );
 };

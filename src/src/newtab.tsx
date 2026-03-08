@@ -204,8 +204,14 @@ const NewTab: React.FC = () => {
     setDeleteModalOpen(true);
   };
 
+  // 二次确认状态
+  const [deleteAllStep, setDeleteAllStep] = useState<'confirm' | 'final'>('confirm');
+  const [deleteAllConfirmText, setDeleteAllConfirmText] = useState('');
+
   // 处理删除所有页面
   const handleDeleteAll = () => {
+    setDeleteAllStep('confirm');
+    setDeleteAllConfirmText('');
     setDeleteConfirmData({
       type: 'all',
       name: '所有页面'
@@ -213,9 +219,41 @@ const NewTab: React.FC = () => {
     setDeleteModalOpen(true);
   };
 
-  // 确认删除
+  // 获取删除确认消息
+  const getDeleteMessage = () => {
+    if (!deleteConfirmData) {
+      return '确定要删除吗？此操作不可恢复。';
+    }
+    
+    if (deleteConfirmData.type === 'page') {
+      return `确定要删除页面"${deleteConfirmData.name}"吗？此操作不可恢复。`;
+    } else if (deleteConfirmData.type === 'group') {
+      return `确定要删除分组"${deleteConfirmData.name}"吗？该分组下的页面不会被删除，但会从该分组中移除。`;
+    } else if (deleteConfirmData.type === 'tag') {
+      return `确定要删除标签"${deleteConfirmData.name}"吗？该标签及其子标签将从所有页面中移除。`;
+    } else if (deleteConfirmData.type === 'all') {
+      if (deleteAllStep === 'confirm') {
+        return '⚠️ 警告：此操作将删除所有收藏的页面和自定义分组，只保留默认的"未分类"分组。此操作不可恢复！';
+      } else {
+        return '请在下方输入"删除所有"以确认此操作。';
+      }
+    }
+    return '确定要删除吗？此操作不可恢复。';
+  };
+
+  // 增强的删除确认逻辑
   const confirmDelete = async () => {
     if (!deleteConfirmData) return;
+    
+    if (deleteConfirmData.type === 'all') {
+      if (deleteAllStep === 'confirm') {
+        setDeleteAllStep('final');
+        return;
+      } else if (deleteAllConfirmText !== '删除所有') {
+        showToast('请输入"删除所有"以确认', 'error');
+        return;
+      }
+    }
     
     let success = false;
     
@@ -239,28 +277,12 @@ const NewTab: React.FC = () => {
       showToast('删除成功', 'success');
       setDeleteModalOpen(false);
       setDeleteConfirmData(null);
+      setDeleteAllStep('confirm');
+      setDeleteAllConfirmText('');
       loadData();
     } else {
       showToast('删除失败', 'error');
     }
-  };
-
-  // 获取删除确认消息
-  const getDeleteMessage = () => {
-    if (!deleteConfirmData) {
-      return '确定要删除吗？此操作不可恢复。';
-    }
-    
-    if (deleteConfirmData.type === 'page') {
-      return `确定要删除页面"${deleteConfirmData.name}"吗？此操作不可恢复。`;
-    } else if (deleteConfirmData.type === 'group') {
-      return `确定要删除分组"${deleteConfirmData.name}"吗？该分组下的页面不会被删除，但会从该分组中移除。`;
-    } else if (deleteConfirmData.type === 'tag') {
-      return `确定要删除标签"${deleteConfirmData.name}"吗？该标签及其子标签将从所有页面中移除。`;
-    } else if (deleteConfirmData.type === 'all') {
-      return '确定要删除所有收藏的页面吗？此操作不可恢复，且不会影响浏览器书签。';
-    }
-    return '确定要删除吗？此操作不可恢复。';
   };
 
   // 从分组中移除
@@ -584,13 +606,39 @@ const NewTab: React.FC = () => {
         onClose={() => {
           setDeleteModalOpen(false);
           setDeleteConfirmData(null);
+          setDeleteAllStep('confirm');
+          setDeleteAllConfirmText('');
         }}
         onConfirm={confirmDelete}
         title="确认删除"
-        message={getDeleteMessage()}
+        message={deleteConfirmData?.type === 'all' ? undefined : getDeleteMessage()}
         variant="danger"
-        confirmText="删除"
-      />
+        confirmText={deleteConfirmData?.type === 'all' && deleteAllStep === 'confirm' ? '继续' : '删除'}
+      >
+        {deleteConfirmData?.type === 'all' && (
+          <div>
+            <p className={`text-gray-600 mb-4 ${deleteAllStep === 'confirm' ? 'text-red-600 font-medium' : ''}`}>
+              {getDeleteMessage()}
+            </p>
+            {deleteAllStep === 'final' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  确认输入
+                </label>
+                <input
+                  type="text"
+                  value={deleteAllConfirmText}
+                  onChange={(e) => setDeleteAllConfirmText(e.target.value)}
+                  placeholder="输入&quot;删除所有&quot;"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  autoFocus
+                />
+              </div>
+            )}
+          </div>
+        )}
+        {deleteConfirmData?.type !== 'all' && <p className="text-gray-600">{getDeleteMessage()}</p>}
+      </ConfirmModal>
 
       {/* 导入弹窗 */}
       <ImportModal
