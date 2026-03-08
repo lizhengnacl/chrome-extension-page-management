@@ -11,8 +11,11 @@ export function Tag({ color, children, ...props }: TagProps) {
 
   return (
     <Chip
-      radius="md"
+      radius="lg"
       variant="solid"
+      classNames={{
+        base: 'shadow-sm transition-transform duration-200',
+      }}
       style={color ? { backgroundColor: color, color: textColor } : undefined}
       {...props}
     >

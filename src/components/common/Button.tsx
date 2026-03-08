@@ -3,10 +3,11 @@ import type { ButtonProps as NextUIButtonProps } from '@nextui-org/react';
 
 interface ButtonProps extends NextUIButtonProps {}
 
-export function Button({ children, ...props }: ButtonProps) {
+export function Button({ children, className, ...props }: ButtonProps) {
   return (
     <NextUIButton
-      radius="md"
+      radius="lg"
+      className={`transition-all duration-200 ${className || ''}`}
       {...props}
     >
       {children}

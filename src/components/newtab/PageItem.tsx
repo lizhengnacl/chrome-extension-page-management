@@ -18,26 +18,46 @@ function PageItemComponent({ page, tags, onToggleFavorite, onEdit, onDelete }: P
   const pageTags = tags.filter((t) => page.tags.includes(t.id));
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-      <img
-        src={faviconError ? DEFAULT_FAVICON : page.favicon || DEFAULT_FAVICON}
-        alt=""
-        className="w-6 h-6 rounded flex-shrink-0"
-        onError={() => setFaviconError(true)}
-      />
+    <div className="group flex items-center gap-4 p-4 bg-background-tertiary/30 rounded-xl border border-border/30 hover:border-primary-500/30 hover:bg-background-tertiary/50 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
+      <div className="relative flex-shrink-0">
+        <img
+          src={faviconError ? DEFAULT_FAVICON : page.favicon || DEFAULT_FAVICON}
+          alt=""
+          className="w-10 h-10 rounded-xl flex-shrink-0 shadow-md"
+          onError={() => setFaviconError(true)}
+        />
+        {page.isFavorite && (
+          <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg">
+            <svg
+              className="w-3 h-3 text-yellow-900"
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+          </div>
+        )}
+      </div>
       <div className="flex-1 min-w-0">
         <a
           href={page.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-medium text-sm text-gray-900 mb-0.5 truncate block"
+          className="font-semibold text-text-primary mb-1 truncate block hover:text-primary-400 transition-colors"
           style={{ textDecoration: 'none' }}
         >
           {page.title}
         </a>
-        <div className="text-xs text-gray-500 truncate">{page.url}</div>
+        <div className="text-sm text-text-muted truncate mb-2">{page.url}</div>
         {pageTags.length > 0 && (
-          <div className="flex gap-1.5 flex-wrap mt-1">
+          <div className="flex gap-1.5 flex-wrap">
             {pageTags.map((tag) => (
               <Tag key={tag.id} color={tag.color} size="sm">
                 {tag.name}
@@ -46,13 +66,13 @@ function PageItemComponent({ page, tags, onToggleFavorite, onEdit, onDelete }: P
           </div>
         )}
       </div>
-      <div className="flex gap-2 flex-shrink-0">
+      <div className="flex gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         <Button
           variant="ghost"
           size="sm"
           isIconOnly
           onClick={() => onToggleFavorite(page.id)}
-          className={page.isFavorite ? 'text-amber-500' : ''}
+          className={`text-text-muted hover:text-yellow-400 hover:bg-yellow-400/10 ${page.isFavorite ? 'text-yellow-400 opacity-100' : ''}`}
           title={page.isFavorite ? '取消常用' : '添加到常用'}
         >
           {page.isFavorite ? (
@@ -92,6 +112,7 @@ function PageItemComponent({ page, tags, onToggleFavorite, onEdit, onDelete }: P
           size="sm"
           isIconOnly
           onClick={() => onEdit(page.id)}
+          className="text-text-muted hover:text-primary-400 hover:bg-primary-400/10"
           title="编辑"
         >
           <svg
@@ -115,6 +136,7 @@ function PageItemComponent({ page, tags, onToggleFavorite, onEdit, onDelete }: P
           size="sm"
           isIconOnly
           onClick={() => onDelete(page.id)}
+          className="text-text-muted hover:text-danger hover:bg-danger/10"
           title="删除"
         >
           <svg

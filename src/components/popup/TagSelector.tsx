@@ -39,17 +39,17 @@ export function TagSelector({ selectedTags, availableTags, onChange, onAddTag }:
   };
 
   return (
-    <div className="mb-5">
-      <label className="block text-sm font-medium mb-2 text-gray-700">标签</label>
-      <div className="flex flex-wrap gap-2 mb-3 min-h-[32px]">
+    <div>
+      <label className="block text-sm font-medium mb-3 text-text-secondary">标签</label>
+      <div className="flex flex-wrap gap-2 mb-4 min-h-[32px]">
         {availableTags.map((tag) => (
           <Tag
             key={tag.id}
             color={tag.color}
             onClick={() => toggleTag(tag.id)}
-            className={`cursor-pointer transition-all duration-200 ${
+            className={`cursor-pointer transition-all duration-300 ${
               selectedTags.includes(tag.id)
-                ? 'ring-2 ring-blue-500'
+                ? 'ring-2 ring-white ring-offset-2 ring-offset-background-primary scale-105'
                 : 'hover:opacity-80 hover:scale-[1.02]'
             }`}
           >
@@ -68,12 +68,18 @@ export function TagSelector({ selectedTags, availableTags, onChange, onAddTag }:
               handleAddTag();
             }
           }}
+          classNames={{
+            input: 'bg-background-tertiary/50 border-border/50 text-text-primary placeholder-text-muted',
+            inputWrapper: 'bg-background-tertiary/30 border border-border/50 rounded-xl',
+          }}
         />
         <Button
           onClick={handleAddTag}
           isLoading={isAdding}
+          color="primary"
+          className="bg-gradient-to-r from-primary-500 to-primary-600 text-white"
         >
-          添加标签
+          添加
         </Button>
       </div>
     </div>

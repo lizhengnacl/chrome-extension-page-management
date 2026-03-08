@@ -85,44 +85,74 @@ export function Popup() {
 
   if (!isInitialized || !currentTab) {
     return (
-      <div className="w-[400px] p-5 flex items-center justify-center min-h-[200px]">
-        <p className="text-gray-500">加载中...</p>
+      <div className="w-[420px] p-8 flex flex-col items-center justify-center min-h-[240px] bg-background-primary">
+        <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-text-secondary text-lg">加载中...</p>
       </div>
     );
   }
 
   return (
-    <div className="w-[400px] p-5">
-      <h1 className="text-xl font-semibold mb-5 text-gray-900">添加当前页面</h1>
+    <div className="w-[420px] p-6 bg-background-primary">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-20 -left-20 w-64 h-64 bg-primary-500/15 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-secondary-500/15 rounded-full blur-3xl"></div>
+      </div>
 
-      <PageInfo
-        url={currentTab.url}
-        title={currentTab.title}
-        favicon={getFaviconUrl(currentTab.url)}
-      />
+      <div className="relative z-10">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center shadow-lg shadow-primary-500/25">
+            <svg
+              className="w-6 h-6 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            </svg>
+          </div>
+          <h1 className="text-xl font-bold text-gradient">添加当前页面</h1>
+        </div>
 
-      <TagSelector
-        selectedTags={selectedTagIds}
-        availableTags={tags}
-        onChange={setSelectedTagIds}
-        onAddTag={addTag}
-      />
+        <div className="space-y-5 animate-fade-in">
+          <PageInfo
+            url={currentTab.url}
+            title={currentTab.title}
+            favicon={getFaviconUrl(currentTab.url)}
+          />
 
-      <GroupSelector
-        selectedGroupId={selectedGroupId}
-        availableGroups={groups}
-        onChange={setSelectedGroupId}
-        onAddGroup={addGroup}
-      />
+          <TagSelector
+            selectedTags={selectedTagIds}
+            availableTags={tags}
+            onChange={setSelectedTagIds}
+            onAddTag={addTag}
+          />
 
-      <Button
-        color="primary"
-        fullWidth
-        onClick={handleAddPage}
-        isLoading={isAdding}
-      >
-        添加页面
-      </Button>
+          <GroupSelector
+            selectedGroupId={selectedGroupId}
+            availableGroups={groups}
+            onChange={setSelectedGroupId}
+            onAddGroup={addGroup}
+          />
+
+          <Button
+            color="primary"
+            fullWidth
+            onClick={handleAddPage}
+            isLoading={isAdding}
+            className="bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 transition-all py-3 text-lg font-semibold"
+          >
+            {isAdding ? '添加中...' : '添加页面'}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

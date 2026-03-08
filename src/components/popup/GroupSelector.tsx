@@ -31,8 +31,8 @@ export function GroupSelector({ selectedGroupId, availableGroups, onChange, onAd
   };
 
   return (
-    <div className="mb-5">
-      <label className="block text-sm font-medium mb-2 text-gray-700">分组</label>
+    <div>
+      <label className="block text-sm font-medium mb-3 text-text-secondary">分组</label>
       <Select
         placeholder="未分组"
         selectedKeys={selectedGroupId ? [selectedGroupId] : []}
@@ -40,10 +40,15 @@ export function GroupSelector({ selectedGroupId, availableGroups, onChange, onAd
           const selectedKey = Array.from(keys)[0] as string | undefined;
           onChange(selectedKey || null);
         }}
-        className="mb-3"
+        className="mb-4"
+        classNames={{
+          trigger: 'bg-background-tertiary/30 border border-border/50 rounded-xl data-[hover=true]:bg-background-tertiary/50',
+          value: 'text-text-primary',
+          popoverContent: 'bg-background-secondary border border-border/50',
+        }}
       >
         {availableGroups.map((group) => (
-          <SelectItem key={group.id} value={group.id}>
+          <SelectItem key={group.id} value={group.id} className="text-text-primary">
             {group.name}
           </SelectItem>
         ))}
@@ -59,12 +64,18 @@ export function GroupSelector({ selectedGroupId, availableGroups, onChange, onAd
               handleAddGroup();
             }
           }}
+          classNames={{
+            input: 'bg-background-tertiary/50 border-border/50 text-text-primary placeholder-text-muted',
+            inputWrapper: 'bg-background-tertiary/30 border border-border/50 rounded-xl',
+          }}
         />
         <Button
           onClick={handleAddGroup}
           isLoading={isAdding}
+          color="primary"
+          className="bg-gradient-to-r from-primary-500 to-primary-600 text-white"
         >
-          添加分组
+          添加
         </Button>
       </div>
     </div>
