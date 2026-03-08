@@ -363,9 +363,6 @@ const NewTab: React.FC = () => {
                         {group.name}
                       </button>
                       <div className="flex items-center gap-1">
-                        <span className="text-xs text-gray-400">
-                          {pages.filter(p => p.groups.includes(group.id)).length}
-                        </span>
                         {group.id !== 'default' && (
                           <button
                             onClick={(e) => {
@@ -380,6 +377,9 @@ const NewTab: React.FC = () => {
                             </svg>
                           </button>
                         )}
+                        <span className="text-xs text-gray-400">
+                          {pages.filter(p => p.groups.includes(group.id)).length}
+                        </span>
                       </div>
                     </div>
                   </div>
