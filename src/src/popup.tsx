@@ -17,6 +17,7 @@ import type { Page } from './types';
 const Popup: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSpecial, setIsSpecial] = useState(false);
+  const [shortcutSet, setShortcutSet] = useState(true);
   const [formData, setFormData] = useState({
     url: '',
     title: '',
@@ -26,10 +27,20 @@ const Popup: React.FC = () => {
   });
   const tagInputRef = useRef<TagInputRef>(null);
 
-  // 初始化：获取当前页面信息
+  // 初始化：获取当前页面信息和检查快捷键设置
   useEffect(() => {
     init();
   }, []);
+
+  const checkShortcut = async () => {
+    try {
+      const commands = await chrome.commands.getAll();
+      const actionCommand = commands.find(cmd => cmd.name === '_execute_action');
+      setShortcutSet(!!actionCommand?.shortcut);
+    } catch (error) {
+      console.error('检查快捷键失败:', error);
+    }
+  };
 
   const init = async () => {
     const tab = await getCurrentTab();
@@ -45,6 +56,7 @@ const Popup: React.FC = () => {
         }));
       }
     }
+    checkShortcut();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -187,9 +199,25 @@ const Popup: React.FC = () => {
 
       {/* 提示信息 */}
       <div className="px-4 pb-4">
-        <p className="text-xs text-gray-400 text-center">
-          按 Ctrl+Shift+S 可快速打开收藏面板
-        </p>
+        {shortcutSet ? (
+          <p className="text-xs text-gray-400 text-center">
+            按 {navigator.platform.toLowerCase().includes('mac') ? 'Command+Shift+S' : 'Ctrl+Shift+S'} 可快速打开收藏面板
+          </p>
+        ) : (
+          <div className="text-center">
+            <p className="text-xs text-amber-600 mb-1">
+              ⚠️ 快捷键未设置
+            </p>
+            <a
+              href={`chrome://extensions/shortcuts`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-blue-600 hover:text-blue-700 underline"
+            >
+              点击此处设置快捷键
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );
