@@ -453,6 +453,17 @@ const NewTab: React.FC = () => {
     }
   };
 
+  // 处理分组置顶
+  const handleTogglePinGroup = async (groupId: string) => {
+    const success = await groupStorage.togglePin(groupId);
+    if (success) {
+      showToast('分组置顶状态已更新', 'success');
+      loadData();
+    } else {
+      showToast('操作失败', 'error');
+    }
+  };
+
   // 获取当前分组名称
   const getCurrentGroupName = () => {
     if (!selectedGroup) return '';
@@ -573,15 +584,38 @@ const NewTab: React.FC = () => {
                       selectedGroup === group.id
                         ? 'bg-blue-50 text-blue-700'
                         : 'text-gray-700 hover:bg-gray-100'
-                    }`}>
+                    } ${group.pinned ? 'border-l-4 border-amber-500 bg-amber-50/50' : ''}`}>
                       <button
                         onClick={() => setSelectedGroup(selectedGroup === group.id ? '' : group.id)}
                         className="flex items-center gap-2 truncate flex-1 text-left"
                       >
-                        <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                        {group.pinned && (
+                          <svg className="w-4 h-4 text-amber-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M17 4l-4 11h-2L7 4h10zm-5 14a2 2 0 100 4 2 2 0 000-4z" />
+                          </svg>
+                        )}
+                        {!group.pinned && (
+                          <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                        )}
                         {group.name}
                       </button>
                       <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleTogglePinGroup(group.id);
+                          }}
+                          className={`opacity-0 group-hover/item:opacity-100 p-1 rounded transition-all ${
+                            group.pinned 
+                              ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-50' 
+                              : 'text-gray-400 hover:text-amber-500 hover:bg-amber-50'
+                          }`}
+                          title={group.pinned ? "取消置顶" : "置顶分组"}
+                        >
+                          <svg className="w-4 h-4" fill={group.pinned ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                          </svg>
+                        </button>
                         {group.id !== 'default' && (
                           <>
                             <button

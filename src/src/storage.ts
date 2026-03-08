@@ -24,7 +24,7 @@ const KEYS = {
 
 function getDefaultGroups(): Group[] {
   return [
-    { id: 'default', name: '未分类', order: 0, createdAt: Date.now() }
+    { id: 'default', name: '未分类', order: 0, pinned: false, createdAt: Date.now() }
   ];
 }
 
@@ -395,7 +395,14 @@ export const pageStorage = {
 export const groupStorage = {
   async getAll(): Promise<Group[]> {
     const data = await getStorageData();
-    return data.groups.sort((a, b) => a.order - b.order);
+    return data.groups.sort((a, b) => {
+      // 置顶的分组排在前面
+      if (a.pinned !== b.pinned) {
+        return a.pinned ? -1 : 1;
+      }
+      // 同一置顶状态下按 order 排序
+      return a.order - b.order;
+    });
   },
 
   async getById(id: string): Promise<Group | undefined> {
@@ -412,12 +419,22 @@ export const groupStorage = {
       name,
       description,
       order: maxOrder + 1,
+      pinned: false,
       createdAt: Date.now(),
     };
 
     data.groups.push(newGroup);
     await setStorageData(data);
     return newGroup;
+  },
+
+  async togglePin(id: string): Promise<boolean> {
+    const data = await getStorageData();
+    const group = data.groups.find(g => g.id === id);
+    if (!group) return false;
+
+    group.pinned = !group.pinned;
+    return setStorageData(data);
   },
 
   async update(id: string, updates: Partial<Group>): Promise<boolean> {

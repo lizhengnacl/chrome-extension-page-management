@@ -29,6 +29,7 @@ export interface Group {
   name: string;
   description?: string;
   order: number; // 排序权重
+  pinned: boolean; // 是否置顶
   createdAt: number;
 }
 
