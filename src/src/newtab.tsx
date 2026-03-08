@@ -15,7 +15,7 @@ import { TagInput } from './components/TagInput';
 import { GroupSelector } from './components/GroupSelector';
 import { ImportModal } from './components/ImportModal';
 import { ExportModal } from './components/ExportModal';
-import { pageStorage, groupStorage, tagStorage } from './storage';
+import { pageStorage, groupStorage, tagStorage, getStorageData, setStorageData } from './storage';
 import { sortByTitle, debounce } from './utils';
 import type { Page, Group, TagNode } from './types';
 
@@ -47,6 +47,21 @@ const NewTab: React.FC = () => {
     id?: string;
     name?: string;
   } | null>(null);
+
+  // 编辑分组弹窗
+  const [editGroupModalOpen, setEditGroupModalOpen] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<Group | null>(null);
+  const [editGroupForm, setEditGroupForm] = useState({
+    name: '',
+    description: '',
+  });
+
+  // 编辑标签弹窗
+  const [editTagModalOpen, setEditTagModalOpen] = useState(false);
+  const [editingTag, setEditingTag] = useState<{ path: string; name: string } | null>(null);
+  const [editTagForm, setEditTagForm] = useState({
+    name: '',
+  });
 
   // 导入弹窗状态
   const [importModalOpen, setImportModalOpen] = useState(false);
@@ -217,6 +232,134 @@ const NewTab: React.FC = () => {
       name: '所有页面'
     });
     setDeleteModalOpen(true);
+  };
+
+  // 处理编辑分组
+  const handleEditGroup = (group: Group) => {
+    setEditingGroup(group);
+    setEditGroupForm({
+      name: group.name,
+      description: group.description || '',
+    });
+    setEditGroupModalOpen(true);
+  };
+
+  // 保存编辑分组
+  const handleSaveEditGroup = async () => {
+    if (!editingGroup) return;
+    if (!editGroupForm.name.trim()) {
+      showToast('分组名称不能为空', 'error');
+      return;
+    }
+
+    const success = await groupStorage.update(editingGroup.id, {
+      name: editGroupForm.name,
+      description: editGroupForm.description,
+    });
+
+    if (success) {
+      showToast('分组更新成功', 'success');
+      setEditGroupModalOpen(false);
+      setEditingGroup(null);
+      loadData();
+    } else {
+      showToast('分组更新失败', 'error');
+    }
+  };
+
+  // 处理编辑标签
+  const handleEditTag = (tagPath: string, tagName: string) => {
+    setEditingTag({ path: tagPath, name: tagName });
+    setEditTagForm({
+      name: tagName,
+    });
+    setEditTagModalOpen(true);
+  };
+
+  // 递归更新标签树
+  const updateTagTree = (nodes: TagNode[], oldPath: string, newName: string): TagNode[] => {
+    const oldPathParts = oldPath.split('/');
+    const targetName = oldPathParts[oldPathParts.length - 1];
+    
+    return nodes.map(node => {
+      // 检查是否是目标节点
+      if (node.path === oldPath) {
+        // 计算新路径
+        const pathParts = oldPath.split('/');
+        pathParts[pathParts.length - 1] = newName;
+        const newPath = pathParts.join('/');
+        
+        // 更新当前节点及其子节点
+        const updateNodePath = (n: TagNode, parentOldPath: string, parentNewPath: string): TagNode => {
+          const relativePath = n.path.substring(parentOldPath.length);
+          const newNodePath = parentNewPath + relativePath;
+          
+          return {
+            ...n,
+            name: n.path === oldPath ? newName : n.name,
+            path: newNodePath,
+            children: n.children.map(child => updateNodePath(child, parentOldPath, parentNewPath)),
+          };
+        };
+        
+        return updateNodePath(node, oldPath, newPath);
+      }
+      
+      // 递归处理子节点
+      if (node.children.length > 0) {
+        return {
+          ...node,
+          children: updateTagTree(node.children, oldPath, newName),
+        };
+      }
+      
+      return node;
+    });
+  };
+
+  // 保存编辑标签
+  const handleSaveEditTag = async () => {
+    if (!editingTag) return;
+    if (!editTagForm.name.trim()) {
+      showToast('标签名称不能为空', 'error');
+      return;
+    }
+
+    // 计算新的标签路径
+    const pathParts = editingTag.path.split('/');
+    pathParts[pathParts.length - 1] = editTagForm.name;
+    const newPath = pathParts.join('/');
+
+    // 获取所有数据
+    const data = await getStorageData();
+    
+    // 更新标签树
+    data.tags = updateTagTree(data.tags, editingTag.path, editTagForm.name);
+    
+    // 更新页面中的标签引用
+    data.pages.forEach(page => {
+      page.tags = page.tags.map(tag => {
+        if (tag === editingTag.path) {
+          return newPath;
+        }
+        if (tag.startsWith(editingTag.path + '/')) {
+          return newPath + tag.substring(editingTag.path.length);
+        }
+        return tag;
+      });
+    });
+
+    // 保存更新
+    const success = await setStorageData(data);
+
+    if (success) {
+      showToast('标签更新成功', 'success');
+      setEditTagModalOpen(false);
+      setEditingTag(null);
+      loadData();
+    } else {
+      showToast('标签更新失败', 'error');
+    }
   };
 
   // 获取删除确认消息
@@ -440,18 +583,32 @@ const NewTab: React.FC = () => {
                       </button>
                       <div className="flex items-center gap-1">
                         {group.id !== 'default' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteGroup(group.id);
-                            }}
-                            className="opacity-0 group-hover/item:opacity-100 p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-all"
-                            title="删除分组"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
+                          <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditGroup(group);
+                              }}
+                              className="opacity-0 group-hover/item:opacity-100 p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-all"
+                              title="编辑分组"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteGroup(group.id);
+                              }}
+                              className="opacity-0 group-hover/item:opacity-100 p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-all"
+                              title="删除分组"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </>
                         )}
                         <span className="text-xs text-gray-400">
                           {pages.filter(p => p.groups.includes(group.id)).length}
@@ -494,6 +651,7 @@ const NewTab: React.FC = () => {
                   onTagClick={tagPath => setSelectedTag(selectedTag === tagPath ? '' : tagPath)}
                   selectedTag={selectedTag}
                   onDeleteTag={handleDeleteTag}
+                  onEditTag={handleEditTag}
                 />
               </div>
             </div>
@@ -639,6 +797,85 @@ const NewTab: React.FC = () => {
         )}
         {deleteConfirmData?.type !== 'all' && <p className="text-gray-600">{getDeleteMessage()}</p>}
       </ConfirmModal>
+
+      {/* 编辑分组弹窗 */}
+      <Modal
+        isOpen={editGroupModalOpen}
+        onClose={() => setEditGroupModalOpen(false)}
+        title="编辑分组"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setEditGroupModalOpen(false)}>
+              取消
+            </Button>
+            <Button onClick={handleSaveEditGroup}>
+              保存
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              分组名称
+            </label>
+            <input
+              type="text"
+              value={editGroupForm.name}
+              onChange={(e) => setEditGroupForm(prev => ({ ...prev, name: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="请输入分组名称"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              描述（可选）
+            </label>
+            <textarea
+              value={editGroupForm.description}
+              onChange={(e) => setEditGroupForm(prev => ({ ...prev, description: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+              rows={3}
+              placeholder="请输入分组描述"
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* 编辑标签弹窗 */}
+      <Modal
+        isOpen={editTagModalOpen}
+        onClose={() => setEditTagModalOpen(false)}
+        title="编辑标签"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setEditTagModalOpen(false)}>
+              取消
+            </Button>
+            <Button onClick={handleSaveEditTag}>
+              保存
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              标签名称
+            </label>
+            <input
+              type="text"
+              value={editTagForm.name}
+              onChange={(e) => setEditTagForm(prev => ({ ...prev, name: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="请输入标签名称"
+            />
+          </div>
+          <div className="text-sm text-gray-500">
+            <p>提示：修改标签名称会同时更新所有相关页面的标签引用。</p>
+          </div>
+        </div>
+      </Modal>
 
       {/* 导入弹窗 */}
       <ImportModal
