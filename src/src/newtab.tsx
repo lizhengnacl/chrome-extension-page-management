@@ -807,11 +807,10 @@ const NewTab: React.FC = () => {
         }}
         onConfirm={confirmDelete}
         title="确认删除"
-        message={deleteConfirmData?.type === 'all' ? undefined : getDeleteMessage()}
         variant="danger"
         confirmText={deleteConfirmData?.type === 'all' && deleteAllStep === 'confirm' ? '继续' : '删除'}
       >
-        {deleteConfirmData?.type === 'all' && (
+        {deleteConfirmData?.type === 'all' ? (
           <div>
             <p className={`text-gray-600 mb-4 ${deleteAllStep === 'confirm' ? 'text-red-600 font-medium' : ''}`}>
               {getDeleteMessage()}
@@ -826,14 +825,15 @@ const NewTab: React.FC = () => {
                   value={deleteAllConfirmText}
                   onChange={(e) => setDeleteAllConfirmText(e.target.value)}
                   placeholder="输入&quot;删除所有&quot;"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-50"
                   autoFocus
                 />
               </div>
             )}
           </div>
+        ) : (
+          <p className="text-gray-600">{getDeleteMessage()}</p>
         )}
-        {deleteConfirmData?.type !== 'all' && <p className="text-gray-600">{getDeleteMessage()}</p>}
       </ConfirmModal>
 
       {/* 编辑分组弹窗 */}
