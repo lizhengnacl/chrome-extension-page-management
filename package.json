@@ -4,30 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview",
-    "test": "vitest",
-    "test:run": "vitest run"
   },
   "dependencies": {
-    "@nextui-org/react": "^2.6.11",
-    "framer-motion": "^12.4.7",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.0.1",
-    "@types/chrome": "^0.0.291",
-    "@types/node": "^22.10.1",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.3",
-    "jsdom": "^25.0.1",
-    "typescript": "~5.6.3",
-    "vite": "^5.4.11",
-    "vite-plugin-chrome-extension": "^0.0.7",
-    "vitest": "^2.1.4"
   }
 }
