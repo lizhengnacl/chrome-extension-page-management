@@ -60,7 +60,7 @@ const SortableTagNodeItem: React.FC<SortableTagNodeItemProps> = ({
     isDragging,
   } = useSortable({ id: node.id });
   
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const hasChildren = node.children.length > 0;
   const isSelected = selectedTag === node.path;

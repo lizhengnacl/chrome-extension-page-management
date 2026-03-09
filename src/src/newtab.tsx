@@ -841,120 +841,122 @@ const NewTab: React.FC = () => {
         <div className="flex gap-6">
           {/* 侧边栏 */}
           <aside className="w-64 flex-shrink-0">
-            {/* 分组列表 */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
-              <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-gray-700 flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                    </svg>
-                    分组
-                  </h3>
-                  <button
-                    onClick={() => setCreateGroupModalOpen(true)}
-                    className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-all"
-                    title="新建分组"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                  </button>
+            <div className="sticky top-24">
+              {/* 分组列表 */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
+                <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-gray-700 flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                      </svg>
+                      分组
+                    </h3>
+                    <button
+                      onClick={() => setCreateGroupModalOpen(true)}
+                      className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-all"
+                      title="新建分组"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <div 
-                ref={groupListRef}
-                className="p-2 max-h-64 overflow-y-auto overflow-x-visible relative"
-              >
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragStart={handleDragStart}
-                  onDragEnd={handleDragEnd}
+                <div 
+                  ref={groupListRef}
+                  className="p-2 max-h-64 overflow-y-auto overflow-x-visible relative"
                 >
-                  <SortableContext
-                    items={groups.map(g => g.id)}
-                    strategy={verticalListSortingStrategy}
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
                   >
-                    {groups.map(group => (
-                      <SortableGroupItem
-                        key={group.id}
-                        group={group}
-                        selectedGroup={selectedGroup}
-                        onSelect={(groupId) => setSelectedGroup(selectedGroup === groupId ? '' : groupId)}
-                        onTogglePin={handleTogglePinGroup}
-                        onEdit={handleEditGroup}
-                        onDelete={handleDeleteGroup}
-                        pageCount={pages.filter(p => p.groups.includes(group.id)).length}
-                      />
-                    ))}
-                  </SortableContext>
-                  <DragOverlay>
-                    {activeId ? (
-                      <div className="opacity-80 bg-white rounded-lg shadow-xl border border-blue-200 px-3 py-2 text-sm">
-                        {(() => {
-                          const group = groups.find(g => g.id === activeId);
-                          return group ? group.name : '';
-                        })()}
-                      </div>
-                    ) : null}
-                  </DragOverlay>
-                </DndContext>
-                {groups.length > 4 && showScrollHint && (
-                  <div className="sticky bottom-[-8px] left-[-8px] right-[-8px] h-12 bg-gradient-to-t from-white via-white/95 to-transparent pointer-events-none flex items-end justify-center pb-3">
-                    <svg className="w-4 h-4 text-gray-400 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
+                    <SortableContext
+                      items={groups.map(g => g.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {groups.map(group => (
+                        <SortableGroupItem
+                          key={group.id}
+                          group={group}
+                          selectedGroup={selectedGroup}
+                          onSelect={(groupId) => setSelectedGroup(selectedGroup === groupId ? '' : groupId)}
+                          onTogglePin={handleTogglePinGroup}
+                          onEdit={handleEditGroup}
+                          onDelete={handleDeleteGroup}
+                          pageCount={pages.filter(p => p.groups.includes(group.id)).length}
+                        />
+                      ))}
+                    </SortableContext>
+                    <DragOverlay>
+                      {activeId ? (
+                        <div className="opacity-80 bg-white rounded-lg shadow-xl border border-blue-200 px-3 py-2 text-sm">
+                          {(() => {
+                            const group = groups.find(g => g.id === activeId);
+                            return group ? group.name : '';
+                          })()}
+                        </div>
+                      ) : null}
+                    </DragOverlay>
+                  </DndContext>
+                  {groups.length > 4 && showScrollHint && (
+                    <div className="sticky bottom-[-8px] left-[-8px] right-[-8px] h-12 bg-gradient-to-t from-white via-white/95 to-transparent pointer-events-none flex items-end justify-center pb-3">
+                      <svg className="w-4 h-4 text-gray-400 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                {selectedGroup && (
+                  <div className="px-3 pb-3">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="w-full"
+                      onClick={() => handleOpenGroup(selectedGroup)}
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                      一键打开分组
+                    </Button>
                   </div>
                 )}
               </div>
-              {selectedGroup && (
-                <div className="px-3 pb-3">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="w-full"
-                    onClick={() => handleOpenGroup(selectedGroup)}
-                  >
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                    一键打开分组
-                  </Button>
-                </div>
-              )}
-            </div>
 
-            {/* 标签树 */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-gray-700 flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                    </svg>
-                    标签
-                  </h3>
-                  <button
-                    onClick={() => setCreateTagModalOpen(true)}
-                    className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-all"
-                    title="新建标签"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                  </button>
+              {/* 标签树 */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-gray-700 flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
+                      标签
+                    </h3>
+                    <button
+                      onClick={() => setCreateTagModalOpen(true)}
+                      className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-all"
+                      title="新建标签"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <div className="p-2 max-h-80 overflow-y-auto">
-                <TagTree
-                  nodes={tags}
-                  onTagClick={tagPath => setSelectedTag(selectedTag === tagPath ? '' : tagPath)}
-                  selectedTag={selectedTag}
-                  onDeleteTag={handleDeleteTag}
-                  onEditTag={handleEditTag}
-                  onReorderTags={handleReorderTags}
-                />
+                <div className="p-2 overflow-y-auto">
+                  <TagTree
+                    nodes={tags}
+                    onTagClick={tagPath => setSelectedTag(selectedTag === tagPath ? '' : tagPath)}
+                    selectedTag={selectedTag}
+                    onDeleteTag={handleDeleteTag}
+                    onEditTag={handleEditTag}
+                    onReorderTags={handleReorderTags}
+                  />
+                </div>
               </div>
             </div>
           </aside>

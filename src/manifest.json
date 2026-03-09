@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "页面管理器",
+  "name": "页集 - TabStack",
   "version": "1.0.0",
-  "description": "轻量级网页收藏与管理工具，支持分组一键打开和多级标签管理",
+  "description": "页集在手，分组打开不用愁。轻量级网页收藏与管理工具，支持分组一键打开和多级标签管理",
   "permissions": [
     "storage",
     "tabs",
-    "bookmarks"
+    "bookmarks",
+    "contextMenus"
   ],
   "action": {
     "default_popup": "popup.html",

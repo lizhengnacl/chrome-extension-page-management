@@ -5,18 +5,14 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     console.log('页面管理器已安装');
   }
   
-  chrome.contextMenus.create({
+  chrome.contextMenus?.create({
     id: 'pageManagerMenu',
     title: '收藏当前页面',
-    contexts: ['page', 'selection', 'link'],
-    icons: {
-      '16': 'icons/icon.svg',
-      '32': 'icons/icon.svg'
-    }
+    contexts: ['page', 'selection', 'link']
   });
 });
 
-chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+chrome.contextMenus?.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === 'pageManagerMenu' && tab) {
     chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
       if (tabs[0] && tabs[0].url && tabs[0].url.startsWith('http')) {

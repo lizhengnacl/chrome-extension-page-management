@@ -117,7 +117,7 @@ export const GroupSelector: React.FC<GroupSelectorProps> = ({
 
       {/* 下拉框 */}
       {isOpen && (
-        <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
+        <div className="absolute z-50 w-full bottom-full mb-1 bg-white border border-gray-200 rounded-lg shadow-lg">
           {/* 搜索框 */}
           <div className="p-2 border-b border-gray-100">
             <div className="relative">
@@ -136,7 +136,7 @@ export const GroupSelector: React.FC<GroupSelectorProps> = ({
           </div>
 
           {/* 分组列表 */}
-          <div className="max-h-48 overflow-y-auto">
+          <div className="max-h-36 overflow-y-auto">
             {filteredGroups.length === 0 ? (
               <div className="px-3 py-4 text-center text-sm text-gray-500">
                 暂无分组
