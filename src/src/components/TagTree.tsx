@@ -3,7 +3,7 @@
  * 显示可折叠的多级标签树，支持拖拽排序
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -220,6 +220,10 @@ const TagTreeLevel: React.FC<TagTreeLevelProps> = ({
 }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [localNodes, setLocalNodes] = useState<TagNode[]>(nodes);
+
+  useEffect(() => {
+    setLocalNodes(nodes);
+  }, [nodes]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
