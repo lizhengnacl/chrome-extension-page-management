@@ -672,6 +672,12 @@ const NewTab: React.FC = () => {
     }
   };
 
+  // 处理标签重新排序
+  const handleReorderTags = async (parentPath: string | null, tagIds: string[]) => {
+    await tagStorage.reorder(parentPath, tagIds);
+    loadData();
+  };
+
   // 获取删除确认消息
   const getDeleteMessage = () => {
     if (!deleteConfirmData) {
@@ -989,6 +995,7 @@ const NewTab: React.FC = () => {
                   selectedTag={selectedTag}
                   onDeleteTag={handleDeleteTag}
                   onEditTag={handleEditTag}
+                  onReorderTags={handleReorderTags}
                 />
               </div>
             </div>

@@ -20,6 +20,7 @@ export interface TagNode {
   id: string;
   name: string;
   path: string; // 完整路径，如 "技术/AI/大模型"
+  order: number; // 排序权重
   children: TagNode[];
 }
 

@@ -396,6 +396,13 @@ export const groupStorage = {
   async getAll(): Promise<Group[]> {
     const data = await getStorageData();
     return data.groups.sort((a, b) => {
+      // 未分类分组始终排在尾部
+      if (a.id === 'default' && b.id !== 'default') {
+        return 1;
+      }
+      if (a.id !== 'default' && b.id === 'default') {
+        return -1;
+      }
       // 置顶的分组排在前面
       if (a.pinned !== b.pinned) {
         return a.pinned ? -1 : 1;
@@ -503,7 +510,16 @@ export const groupStorage = {
 export const tagStorage = {
   async getAll(): Promise<TagNode[]> {
     const data = await getStorageData();
-    return data.tags;
+    
+    const ensureOrderAndSort = (nodes: TagNode[]): TagNode[] => {
+      return nodes.map((node, index) => ({
+        ...node,
+        order: node.order !== undefined ? node.order : index,
+        children: ensureOrderAndSort(node.children),
+      })).sort((a, b) => a.order - b.order);
+    };
+    
+    return ensureOrderAndSort(data.tags);
   },
 
   async addTag(path: string): Promise<void> {
@@ -513,15 +529,18 @@ export const tagStorage = {
     let currentLevel = data.tags;
     let currentPath = '';
 
-    for (const part of parts) {
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
       currentPath = currentPath ? currentPath + '/' + part : part;
       
       let existingNode = currentLevel.find(node => node.name === part);
       if (!existingNode) {
+        const maxOrder = currentLevel.length > 0 ? Math.max(...currentLevel.map(n => n.order), -1) : -1;
         existingNode = {
           id: generateId(),
           name: part,
           path: currentPath,
+          order: maxOrder + 1,
           children: [],
         };
         currentLevel.push(existingNode);
@@ -531,6 +550,40 @@ export const tagStorage = {
     }
 
     await setStorageData(data);
+  },
+
+  async reorder(parentPath: string | null, tagIds: string[]): Promise<boolean> {
+    const data = await getStorageData();
+    
+    const updateOrder = (nodes: TagNode[], ids: string[]): TagNode[] => {
+      ids.forEach((id, index) => {
+        const node = nodes.find(n => n.id === id);
+        if (node) {
+          node.order = index;
+        }
+      });
+      return nodes.sort((a, b) => a.order - b.order);
+    };
+
+    if (parentPath === null) {
+      data.tags = updateOrder(data.tags, tagIds);
+    } else {
+      const findAndUpdate = (nodes: TagNode[]): boolean => {
+        for (const node of nodes) {
+          if (node.path === parentPath) {
+            node.children = updateOrder(node.children, tagIds);
+            return true;
+          }
+          if (findAndUpdate(node.children)) {
+            return true;
+          }
+        }
+        return false;
+      };
+      findAndUpdate(data.tags);
+    }
+    
+    return setStorageData(data);
   },
 
   async getAllPaths(): Promise<string[]> {
