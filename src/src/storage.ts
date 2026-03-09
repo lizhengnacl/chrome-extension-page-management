@@ -405,6 +405,20 @@ export const groupStorage = {
     });
   },
 
+  async reorder(groupIds: string[]): Promise<boolean> {
+    const data = await getStorageData();
+    
+    // 为每个分组更新 order 值
+    groupIds.forEach((groupId, index) => {
+      const group = data.groups.find(g => g.id === groupId);
+      if (group) {
+        group.order = index;
+      }
+    });
+    
+    return setStorageData(data);
+  },
+
   async getById(id: string): Promise<Group | undefined> {
     const data = await getStorageData();
     return data.groups.find(g => g.id === id);
