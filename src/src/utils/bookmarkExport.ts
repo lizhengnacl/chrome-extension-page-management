@@ -115,7 +115,7 @@ export async function exportBookmarks(): Promise<ExportResult> {
     // 创建导出根文件夹
     const exportRoot = await chrome.bookmarks.create({
       parentId: targetFolder.id,
-      title: `页面管理器导出 - ${new Date().toLocaleDateString('zh-CN')}`,
+      title: `页集导出 - ${new Date().toLocaleDateString('zh-CN')}`,
     });
 
     let totalExported = 0;

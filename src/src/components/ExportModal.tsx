@@ -72,7 +72,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         <div className="text-sm text-gray-600">
           <p className="mb-2">此操作将：</p>
           <ul className="list-disc list-inside space-y-1 ml-2">
-            <li>将页面管理器中的页面导出到浏览器书签</li>
+            <li>将页集中的页面导出到浏览器书签</li>
             <li>分组将映射为书签文件夹</li>
             <li>多归属页面会在多个文件夹中出现</li>
             <li>标签信息将被忽略</li>

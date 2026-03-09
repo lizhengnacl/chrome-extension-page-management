@@ -778,7 +778,7 @@ const NewTab: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">页面管理器</h1>
+                <h1 className="text-xl font-bold text-gray-900">页集</h1>
                 <p className="text-xs text-gray-500">{filteredPages.length} 个收藏</p>
               </div>
             </div>
@@ -1000,7 +1000,7 @@ const NewTab: React.FC = () => {
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 mb-1">暂无收藏的页面</h3>
                 <p className="text-sm text-gray-500 max-w-sm">
-                  点击浏览器工具栏上的页面管理器图标，开始收藏您常用的网页。
+                  点击浏览器工具栏上的页集图标，开始收藏您常用的网页。
                 </p>
               </div>
             ) : (

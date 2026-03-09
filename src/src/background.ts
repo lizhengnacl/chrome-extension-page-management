@@ -9,7 +9,7 @@ import { isSpecialPage } from './utils';
 // 扩展安装时初始化
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {
-    console.log('页面管理器已安装');
+    console.log('页集已安装');
   }
 });
 

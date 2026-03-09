@@ -37,7 +37,7 @@
         "default": "Ctrl+Shift+S",
         "mac": "Command+Shift+S"
       },
-      "description": "快速打开收藏面板"
+      "description": "快速打开页集"
     }
   },
   "web_accessible_resources": [

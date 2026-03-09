@@ -2,12 +2,12 @@ import { getStorageUsage, pageStorage } from './src/storage';
 
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {
-    console.log('页面管理器已安装');
+    console.log('页集已安装');
   }
   
   chrome.contextMenus?.create({
     id: 'pageManagerMenu',
-    title: '收藏当前页面',
+    title: '收藏到页集',
     contexts: ['page', 'selection', 'link']
   });
 });

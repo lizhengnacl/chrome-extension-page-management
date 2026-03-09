@@ -168,7 +168,7 @@ const Popup: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
             </svg>
           </div>
-          <h1 className="text-lg font-semibold text-white">收藏页面</h1>
+          <h1 className="text-lg font-semibold text-white">页集</h1>
         </div>
       </div>
 
@@ -236,7 +236,7 @@ const Popup: React.FC = () => {
       <div className="px-4 pb-4">
         {shortcutSet ? (
           <p className="text-xs text-gray-400 text-center">
-            按 {navigator.platform.toLowerCase().includes('mac') ? 'Command+Shift+S' : 'Ctrl+Shift+S'} 可快速打开收藏面板
+            按 {navigator.platform.toLowerCase().includes('mac') ? 'Command+Shift+S' : 'Ctrl+Shift+S'} 可快速打开页集
           </p>
         ) : (
           <div className="text-center">
