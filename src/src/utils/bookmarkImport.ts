@@ -8,19 +8,19 @@ import { pageStorage, groupStorage, getStorageData, setStorageData, generateId }
 import { getFaviconUrl, isSamePage } from '../utils';
 import type { Page, StorageData, Group } from '../types';
 
-interface ImportResult {
-  success: boolean;
-  importedCount: number;
-  skippedCount: number;
-  error?: string;
-}
-
-interface BookmarkNode {
+export interface BookmarkNode {
   id: string;
   title: string;
   url?: string;
   children?: BookmarkNode[];
   dateAdded?: number;
+}
+
+export interface ImportResult {
+  success: boolean;
+  importedCount: number;
+  skippedCount: number;
+  error?: string;
 }
 
 interface ImportContext {
@@ -236,6 +236,225 @@ export async function importBookmarks(): Promise<ImportResult> {
       });
 
       // 一次性保存所有变更
+      const success = await setStorageData(newData);
+      if (!success) {
+        return {
+          success: false,
+          importedCount: 0,
+          skippedCount: totalImported + totalSkipped,
+          error: '保存数据失败',
+        };
+      }
+    }
+
+    return {
+      success: true,
+      importedCount: totalImported,
+      skippedCount: totalSkipped,
+    };
+  } catch (error) {
+    console.error('导入书签失败:', error);
+    return {
+      success: false,
+      importedCount: 0,
+      skippedCount: 0,
+      error: error instanceof Error ? error.message : '未知错误',
+    };
+  }
+}
+
+/**
+ * 获取书签树
+ */
+export async function getBookmarkTree(): Promise<BookmarkNode[]> {
+  try {
+    const bookmarkTree = await chrome.bookmarks.getTree();
+    return bookmarkTree || [];
+  } catch (error) {
+    console.error('获取书签树失败:', error);
+    return [];
+  }
+}
+
+/**
+ * 选择性导入书签
+ */
+export async function importSelectedBookmarks(selectedIds: Set<string>): Promise<ImportResult> {
+  try {
+    const bookmarkTree = await chrome.bookmarks.getTree();
+    
+    if (!bookmarkTree || bookmarkTree.length === 0) {
+      return {
+        success: false,
+        importedCount: 0,
+        skippedCount: 0,
+        error: '无法获取书签数据',
+      };
+    }
+
+    const currentData = await getStorageData();
+    
+    const context: ImportContext = {
+      importedUrls: new Set(),
+      pagesToAdd: [],
+      pagesToUpdate: new Map(),
+      groupsToAdd: [],
+      existingPages: currentData.pages.map(p => ({
+        id: p.id,
+        url: p.url,
+        groups: [...p.groups],
+      })),
+      existingGroups: [...currentData.groups],
+    };
+
+    const groupIdMap = new Map<string, string>();
+    let totalImported = 0;
+    let totalSkipped = 0;
+
+    function hasSelectedChildren(node: BookmarkNode): boolean {
+      if (node.url && selectedIds.has(node.id)) {
+        return true;
+      }
+      if (node.children) {
+        return node.children.some(child => hasSelectedChildren(child));
+      }
+      return false;
+    }
+
+    async function traverseAndImport(
+      node: BookmarkNode,
+      parentGroupId: string = 'default'
+    ): Promise<{ imported: number; skipped: number }> {
+      let imported = 0;
+      let skipped = 0;
+
+      if (node.url) {
+        if (selectedIds.has(node.id)) {
+          try {
+            const isAlreadyProcessed = Array.from(context.importedUrls).some(processedUrl => 
+              isSamePage(processedUrl, node.url)
+            );
+
+            if (isAlreadyProcessed) {
+              skipped++;
+            } else {
+              const existingPage = context.existingPages.find(p => 
+                isSamePage(p.url, node.url)
+              );
+
+              if (existingPage) {
+                if (!existingPage.groups.includes(parentGroupId)) {
+                  const currentUpdates = context.pagesToUpdate.get(existingPage.id) || {};
+                  const newGroups = [...existingPage.groups, parentGroupId];
+                  context.pagesToUpdate.set(existingPage.id, {
+                    ...currentUpdates,
+                    groups: newGroups,
+                    updatedAt: Date.now(),
+                  });
+                  existingPage.groups = newGroups;
+                  imported++;
+                } else {
+                  skipped++;
+                }
+              } else {
+                const newPage: Page = {
+                  id: generateId(),
+                  url: node.url,
+                  title: node.title || node.url,
+                  favicon: getFaviconUrl(node.url),
+                  tags: [],
+                  groups: [parentGroupId],
+                  createdAt: Date.now(),
+                  updatedAt: Date.now(),
+                };
+                
+                context.pagesToAdd.push(newPage);
+                imported++;
+                context.importedUrls.add(node.url);
+                context.existingPages.push({
+                  id: newPage.id,
+                  url: newPage.url,
+                  groups: newPage.groups,
+                });
+              }
+            }
+          } catch {
+            skipped++;
+          }
+        }
+      }
+
+      if (node.children && node.children.length > 0) {
+        let currentGroupId = parentGroupId;
+
+        if (node.title && node.title !== '' && hasSelectedChildren(node)) {
+          let group = context.existingGroups.find(g => g.name === node.title);
+          
+          if (!group) {
+            group = context.groupsToAdd.find(g => g.name === node.title);
+          }
+
+          if (!group) {
+            const maxOrder = Math.max(
+              ...context.existingGroups.map(g => g.order),
+              ...context.groupsToAdd.map(g => g.order),
+              0
+            );
+            group = {
+              id: generateId(),
+              name: node.title,
+              order: maxOrder + 1,
+              createdAt: Date.now(),
+            };
+            context.groupsToAdd.push(group);
+          }
+
+          currentGroupId = group.id;
+          groupIdMap.set(node.id, currentGroupId);
+        }
+
+        for (const child of node.children) {
+          const result = await traverseAndImport(child, currentGroupId);
+          imported += result.imported;
+          skipped += result.skipped;
+        }
+      }
+
+      return { imported, skipped };
+    }
+
+    for (const rootNode of bookmarkTree) {
+      if (rootNode.children) {
+        for (const child of rootNode.children) {
+          const result = await traverseAndImport(child, 'default');
+          totalImported += result.imported;
+          totalSkipped += result.skipped;
+        }
+      }
+    }
+
+    if (context.groupsToAdd.length > 0 || context.pagesToAdd.length > 0 || context.pagesToUpdate.size > 0) {
+      await delay(100);
+      
+      const newData: StorageData = {
+        ...currentData,
+        groups: [...currentData.groups, ...context.groupsToAdd],
+        pages: [
+          ...currentData.pages,
+          ...context.pagesToAdd,
+        ],
+      };
+
+      context.pagesToUpdate.forEach((updates, pageId) => {
+        const index = newData.pages.findIndex(p => p.id === pageId);
+        if (index !== -1) {
+          newData.pages[index] = {
+            ...newData.pages[index],
+            ...updates,
+          };
+        }
+      });
+
       const success = await setStorageData(newData);
       if (!success) {
         return {
