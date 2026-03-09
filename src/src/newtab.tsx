@@ -491,20 +491,9 @@ const NewTab: React.FC = () => {
     setDeleteModalOpen(true);
   };
 
-  // 二次确认状态
-  const [deleteAllStep, setDeleteAllStep] = useState<'confirm' | 'final'>('confirm');
-  const [deleteAllConfirmText, setDeleteAllConfirmText] = useState('');
 
-  // 处理删除所有页面
-  const handleDeleteAll = () => {
-    setDeleteAllStep('confirm');
-    setDeleteAllConfirmText('');
-    setDeleteConfirmData({
-      type: 'all',
-      name: '所有页面'
-    });
-    setDeleteModalOpen(true);
-  };
+
+
 
   // 处理编辑分组
   const handleEditGroup = (group: Group) => {
@@ -692,29 +681,13 @@ const NewTab: React.FC = () => {
       return `确定要删除分组"${deleteConfirmData.name}"吗？该分组下的页面不会被删除，但会从该分组中移除。`;
     } else if (deleteConfirmData.type === 'tag') {
       return `确定要删除标签"${deleteConfirmData.name}"吗？该标签及其子标签将从所有页面中移除。`;
-    } else if (deleteConfirmData.type === 'all') {
-      if (deleteAllStep === 'confirm') {
-        return '⚠️ 警告：此操作将删除所有收藏的页面和自定义分组，只保留默认的"未分类"分组。此操作不可恢复！';
-      } else {
-        return '请在下方输入"删除所有"以确认此操作。';
-      }
     }
     return '确定要删除吗？此操作不可恢复。';
   };
 
-  // 增强的删除确认逻辑
+  // 删除确认逻辑
   const confirmDelete = async () => {
     if (!deleteConfirmData) return;
-    
-    if (deleteConfirmData.type === 'all') {
-      if (deleteAllStep === 'confirm') {
-        setDeleteAllStep('final');
-        return;
-      } else if (deleteAllConfirmText !== '删除所有') {
-        showToast('请输入"删除所有"以确认', 'error');
-        return;
-      }
-    }
     
     let success = false;
     
@@ -730,16 +703,12 @@ const NewTab: React.FC = () => {
       if (success && selectedTag === deleteConfirmData.id) {
         setSelectedTag('');
       }
-    } else if (deleteConfirmData.type === 'all') {
-      success = await pageStorage.deleteAll();
     }
     
     if (success) {
       showToast('删除成功', 'success');
       setDeleteModalOpen(false);
       setDeleteConfirmData(null);
-      setDeleteAllStep('confirm');
-      setDeleteAllConfirmText('');
       loadData();
     } else {
       showToast('删除失败', 'error');
@@ -832,19 +801,6 @@ const NewTab: React.FC = () => {
 
             {/* 右侧操作 */}
             <div className="flex items-center gap-3">
-              {pages.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleDeleteAll}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  删除所有
-                </Button>
-              )}
               <Button
                 variant="secondary"
                 size="sm"
@@ -1111,38 +1067,13 @@ const NewTab: React.FC = () => {
         onClose={() => {
           setDeleteModalOpen(false);
           setDeleteConfirmData(null);
-          setDeleteAllStep('confirm');
-          setDeleteAllConfirmText('');
         }}
         onConfirm={confirmDelete}
         title="确认删除"
         variant="danger"
-        confirmText={deleteConfirmData?.type === 'all' && deleteAllStep === 'confirm' ? '继续' : '删除'}
+        confirmText="删除"
       >
-        {deleteConfirmData?.type === 'all' ? (
-          <div>
-            <p className={`text-gray-600 mb-4 ${deleteAllStep === 'confirm' ? 'text-red-600 font-medium' : ''}`}>
-              {getDeleteMessage()}
-            </p>
-            {deleteAllStep === 'final' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  确认输入
-                </label>
-                <input
-                  type="text"
-                  value={deleteAllConfirmText}
-                  onChange={(e) => setDeleteAllConfirmText(e.target.value)}
-                  placeholder="输入&quot;删除所有&quot;"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-50"
-                  autoFocus
-                />
-              </div>
-            )}
-          </div>
-        ) : (
-          <p className="text-gray-600">{getDeleteMessage()}</p>
-        )}
+        <p className="text-gray-600">{getDeleteMessage()}</p>
       </ConfirmModal>
 
       {/* 编辑分组弹窗 */}
