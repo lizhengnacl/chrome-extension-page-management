@@ -18,6 +18,7 @@ const Popup: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSpecial, setIsSpecial] = useState(false);
   const [shortcutSet, setShortcutSet] = useState(true);
+  const [existingPage, setExistingPage] = useState<Page | null>(null);
   const [formData, setFormData] = useState({
     url: '',
     title: '',
@@ -48,12 +49,25 @@ const Popup: React.FC = () => {
       if (isSpecialPage(tab.url)) {
         setIsSpecial(true);
       } else {
-        setFormData(prev => ({
-          ...prev,
-          url: tab.url || '',
-          title: tab.title || '',
-          favicon: tab.favIconUrl || getFaviconUrl(tab.url || ''),
-        }));
+        const existing = await pageStorage.getByUrl(tab.url);
+        setExistingPage(existing || null);
+        
+        if (existing) {
+          setFormData({
+            url: tab.url || '',
+            title: existing.title,
+            favicon: existing.favicon || tab.favIconUrl || getFaviconUrl(tab.url || ''),
+            tags: existing.tags,
+            groups: existing.groups,
+          });
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            url: tab.url || '',
+            title: tab.title || '',
+            favicon: tab.favIconUrl || getFaviconUrl(tab.url || ''),
+          }));
+        }
       }
     }
     checkShortcut();
@@ -74,28 +88,49 @@ const Popup: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const result = await pageStorage.add({
-        url: formData.url,
-        title: formData.title,
-        favicon: formData.favicon,
-        tags: formData.tags,
-        groups,
-      });
+      if (existingPage) {
+        // 检查是否有变更
+        const hasChanges = 
+          existingPage.title !== formData.title ||
+          JSON.stringify(existingPage.tags.sort()) !== JSON.stringify(formData.tags.sort()) ||
+          JSON.stringify(existingPage.groups.sort()) !== JSON.stringify(groups.sort());
 
-      if (result) {
-        showToast('页面收藏成功！', 'success');
-        // 清空表单
-        setFormData({
-          url: '',
-          title: '',
-          favicon: '',
-          tags: [],
-          groups: [],
+        if (!hasChanges) {
+          // 没有变更，直接关闭 popup
+          window.close();
+          return;
+        }
+
+        // 有变更，更新页面
+        const result = await pageStorage.update(existingPage.id, {
+          title: formData.title,
+          tags: formData.tags,
+          groups,
         });
-        // 重新初始化
-        setTimeout(() => init(), 500);
+
+        if (result.success) {
+          showToast('更新成功！', 'success');
+          window.close();
+        } else {
+          showToast('更新失败，请重试', 'error');
+        }
       } else {
-        showToast('该链接已在本分组中存在', 'error');
+        // 页面不存在，新增
+        const result = await pageStorage.add({
+          url: formData.url,
+          title: formData.title,
+          favicon: formData.favicon,
+          tags: formData.tags,
+          groups,
+        });
+
+        if (result) {
+          showToast('页面收藏成功！', 'success');
+          window.close();
+        } else {
+          // 理论上不会出现，因为 init 时已经检查过了
+          showToast('保存失败，请重试', 'error');
+        }
       }
     } catch (error) {
       showToast('保存失败，请重试', 'error');

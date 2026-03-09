@@ -76,10 +76,10 @@ export const PageListItem: React.FC<PageListItemProps> = ({
       {/* 内容 */}
       <div className="flex-1 min-w-0">
         <h3 className="font-medium text-gray-900 truncate" title={page.title}>
-          {truncate(page.title, 60)}
+          {page.title}
         </h3>
         <p className="text-sm text-gray-500 truncate" title={page.url}>
-          {formatUrl(page.url, 50)}
+          {formatUrl(page.url)}
         </p>
         
         {/* 标签和分组 */}

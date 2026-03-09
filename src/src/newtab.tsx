@@ -438,16 +438,18 @@ const NewTab: React.FC = () => {
 
     tagInputRef.current?.flushInput();
 
-    const success = await pageStorage.update(editingPage.id, {
+    const result = await pageStorage.update(editingPage.id, {
       title: editForm.title,
       tags: editForm.tags,
       groups: editForm.groups,
     });
 
-    if (success) {
+    if (result.success) {
       showToast('更新成功', 'success');
       setEditModalOpen(false);
       loadData();
+    } else if (result.isDuplicate) {
+      showToast('此链接已存在，您可以在已收藏的页面中编辑分组、标签', 'error');
     } else {
       showToast('更新失败', 'error');
     }

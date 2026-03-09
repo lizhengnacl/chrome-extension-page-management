@@ -284,18 +284,22 @@ export const pageStorage = {
     return data.pages.find(p => p.id === id);
   },
 
-  async checkDuplicate(url: string, groups: string[]): Promise<boolean> {
+  async getByUrl(url: string): Promise<Page | undefined> {
+    const data = await getStorageData();
+    return data.pages.find(p => isSamePage(p.url, url));
+  },
+
+  async checkDuplicate(url: string, excludePageId?: string): Promise<boolean> {
     const data = await getStorageData();
     return data.pages.some(page => 
-      isSamePage(page.url, url) && 
-      page.groups.some(groupId => groups.includes(groupId))
+      isSamePage(page.url, url) && page.id !== excludePageId
     );
   },
 
   async add(page: Omit<Page, 'id' | 'createdAt' | 'updatedAt'>): Promise<Page | null> {
     const data = await getStorageData();
     
-    const isDuplicate = await this.checkDuplicate(page.url, page.groups);
+    const isDuplicate = await this.checkDuplicate(page.url);
     
     if (isDuplicate) {
       return null;
@@ -313,17 +317,25 @@ export const pageStorage = {
     return success ? newPage : null;
   },
 
-  async update(id: string, updates: Partial<Page>): Promise<boolean> {
+  async update(id: string, updates: Partial<Page>): Promise<{ success: boolean; isDuplicate?: boolean }> {
     const data = await getStorageData();
     const index = data.pages.findIndex(p => p.id === id);
-    if (index === -1) return false;
+    if (index === -1) return { success: false };
+
+    if (updates.url) {
+      const isDuplicate = await this.checkDuplicate(updates.url, id);
+      if (isDuplicate) {
+        return { success: false, isDuplicate: true };
+      }
+    }
 
     data.pages[index] = {
       ...data.pages[index],
       ...updates,
       updatedAt: Date.now(),
     };
-    return setStorageData(data);
+    const success = await setStorageData(data);
+    return { success };
   },
 
   async delete(id: string): Promise<boolean> {
