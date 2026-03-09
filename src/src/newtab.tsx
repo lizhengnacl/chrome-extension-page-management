@@ -825,7 +825,7 @@ const NewTab: React.FC = () => {
           {/* 侧边栏 */}
           <aside className="w-64 flex-shrink-0">
             {/* 分组列表 */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4 relative">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
               <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
                 <h3 className="font-semibold text-gray-700 flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -836,7 +836,7 @@ const NewTab: React.FC = () => {
               </div>
               <div 
                 ref={groupListRef}
-                className="p-2 max-h-64 overflow-y-auto overflow-x-visible"
+                className="p-2 max-h-64 overflow-y-auto overflow-x-visible relative"
               >
                 <DndContext
                   sensors={sensors}
@@ -872,14 +872,14 @@ const NewTab: React.FC = () => {
                     ) : null}
                   </DragOverlay>
                 </DndContext>
+                {groups.length > 4 && showScrollHint && (
+                  <div className="sticky bottom-[-8px] left-[-8px] right-[-8px] h-12 bg-gradient-to-t from-white via-white/95 to-transparent pointer-events-none flex items-end justify-center pb-3">
+                    <svg className="w-4 h-4 text-gray-400 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                )}
               </div>
-              {groups.length > 4 && showScrollHint && (
-                <div className="absolute bottom-12 left-2 right-2 h-8 bg-gradient-to-t from-white to-transparent pointer-events-none flex items-end justify-center pb-1 rounded-b-xl z-10">
-                  <svg className="w-4 h-4 text-gray-400 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              )}
               {selectedGroup && (
                 <div className="px-3 pb-3">
                   <Button
