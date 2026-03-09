@@ -324,6 +324,19 @@ const NewTab: React.FC = () => {
   // 导出弹窗状态
   const [exportModalOpen, setExportModalOpen] = useState(false);
 
+  // 新建分组弹窗状态
+  const [createGroupModalOpen, setCreateGroupModalOpen] = useState(false);
+  const [createGroupForm, setCreateGroupForm] = useState({
+    name: '',
+    description: '',
+  });
+
+  // 新建标签弹窗状态
+  const [createTagModalOpen, setCreateTagModalOpen] = useState(false);
+  const [createTagForm, setCreateTagForm] = useState({
+    path: '',
+  });
+
   // 初始化加载数据
   useEffect(() => {
     loadData();
@@ -619,6 +632,46 @@ const NewTab: React.FC = () => {
     }
   };
 
+  // 处理新建分组
+  const handleCreateGroup = async () => {
+    if (!createGroupForm.name.trim()) {
+      showToast('分组名称不能为空', 'error');
+      return;
+    }
+
+    const newGroup = await groupStorage.add(
+      createGroupForm.name.trim(),
+      createGroupForm.description.trim() || undefined
+    );
+
+    if (newGroup) {
+      showToast('分组创建成功', 'success');
+      setCreateGroupModalOpen(false);
+      setCreateGroupForm({ name: '', description: '' });
+      loadData();
+    } else {
+      showToast('分组创建失败', 'error');
+    }
+  };
+
+  // 处理新建标签
+  const handleCreateTag = async () => {
+    if (!createTagForm.path.trim()) {
+      showToast('标签路径不能为空', 'error');
+      return;
+    }
+
+    try {
+      await tagStorage.addTag(createTagForm.path.trim());
+      showToast('标签创建成功', 'success');
+      setCreateTagModalOpen(false);
+      setCreateTagForm({ path: '' });
+      loadData();
+    } catch {
+      showToast('标签创建失败', 'error');
+    }
+  };
+
   // 获取删除确认消息
   const getDeleteMessage = () => {
     if (!deleteConfirmData) {
@@ -827,12 +880,23 @@ const NewTab: React.FC = () => {
             {/* 分组列表 */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
               <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
-                <h3 className="font-semibold text-gray-700 flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                  </svg>
-                  分组
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-700 flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                    </svg>
+                    分组
+                  </h3>
+                  <button
+                    onClick={() => setCreateGroupModalOpen(true)}
+                    className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-all"
+                    title="新建分组"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
               </div>
               <div 
                 ref={groupListRef}
@@ -900,12 +964,23 @@ const NewTab: React.FC = () => {
             {/* 标签树 */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
-                <h3 className="font-semibold text-gray-700 flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                  </svg>
-                  标签
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-700 flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                    标签
+                  </h3>
+                  <button
+                    onClick={() => setCreateTagModalOpen(true)}
+                    className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-all"
+                    title="新建标签"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
               </div>
               <div className="p-2 max-h-80 overflow-y-auto">
                 <TagTree
@@ -1136,6 +1211,99 @@ const NewTab: React.FC = () => {
           </div>
           <div className="text-sm text-gray-500">
             <p>提示：修改标签名称会同时更新所有相关页面的标签引用。</p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 新建分组弹窗 */}
+      <Modal
+        isOpen={createGroupModalOpen}
+        onClose={() => {
+          setCreateGroupModalOpen(false);
+          setCreateGroupForm({ name: '', description: '' });
+        }}
+        title="新建分组"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => {
+              setCreateGroupModalOpen(false);
+              setCreateGroupForm({ name: '', description: '' });
+            }}>
+              取消
+            </Button>
+            <Button onClick={handleCreateGroup}>
+              创建
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              分组名称
+            </label>
+            <input
+              type="text"
+              value={createGroupForm.name}
+              onChange={(e) => setCreateGroupForm(prev => ({ ...prev, name: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="请输入分组名称"
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              描述（可选）
+            </label>
+            <textarea
+              value={createGroupForm.description}
+              onChange={(e) => setCreateGroupForm(prev => ({ ...prev, description: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+              rows={3}
+              placeholder="请输入分组描述"
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* 新建标签弹窗 */}
+      <Modal
+        isOpen={createTagModalOpen}
+        onClose={() => {
+          setCreateTagModalOpen(false);
+          setCreateTagForm({ path: '' });
+        }}
+        title="新建标签"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => {
+              setCreateTagModalOpen(false);
+              setCreateTagForm({ path: '' });
+            }}>
+              取消
+            </Button>
+            <Button onClick={handleCreateTag}>
+              创建
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              标签路径
+            </label>
+            <input
+              type="text"
+              value={createTagForm.path}
+              onChange={(e) => setCreateTagForm(prev => ({ ...prev, path: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="如：技术/AI/大模型"
+              autoFocus
+            />
+          </div>
+          <div className="text-sm text-gray-500">
+            <p>提示：使用/分隔创建多级标签，如"技术/AI/大模型"。</p>
           </div>
         </div>
       </Modal>
