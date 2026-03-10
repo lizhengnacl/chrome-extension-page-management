@@ -1,4 +1,4 @@
-import { getStorageUsage, pageStorage } from './src/storage';
+import { getStorageUsage, pageStorage, getStorageData, setStorageData } from './src/storage';
 
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {
@@ -13,13 +13,52 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 });
 
 chrome.contextMenus?.onClicked.addListener(async (info, tab) => {
-  if (info.menuItemId === 'pageManagerMenu' && tab) {
-    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
-      if (tabs[0] && tabs[0].url && tabs[0].url.startsWith('http')) {
-        chrome.runtime.sendMessage({ 
-          action: 'openPopup' });
+  if (info.menuItemId === 'pageManagerMenu' && tab && tab.url && tab.title) {
+    try {
+      const url = info.linkUrl || tab.url;
+      const title = tab.title || url;
+      const favicon = tab.favIconUrl || '';
+      
+      const data = await getStorageData();
+      
+      const isDuplicate = data.pages.some(p => p.url === url);
+      
+      if (isDuplicate) {
+        console.log('页面已收藏');
+        return;
       }
-    });
+      
+      const newPage = {
+        url,
+        title,
+        favicon,
+        tags: [],
+        groups: ['default'],
+        id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      
+      data.pages.push(newPage);
+      await setStorageData(data);
+      
+      console.log('页面收藏成功:', title);
+      
+      chrome.notifications?.create({
+        type: 'basic',
+        iconUrl: 'icons/icon-128.png',
+        title: '页集',
+        message: `已收藏: ${title}`,
+      });
+    } catch (error) {
+      console.error('收藏失败:', error);
+      chrome.notifications?.create({
+        type: 'basic',
+        iconUrl: 'icons/icon-128.png',
+        title: '页集',
+        message: '收藏失败，请重试',
+      });
+    }
   }
 });
 
