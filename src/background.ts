@@ -1,82 +1,9 @@
-import { getStorageUsage, pageStorage, getStorageData, setStorageData } from './src/storage';
+import { getStorageUsage, pageStorage } from './src/storage';
 import { isSpecialPage } from './src/utils';
 
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {
     console.log('页集已安装');
-  }
-  
-  chrome.contextMenus?.create({
-    id: 'pageManagerMenu',
-    title: '收藏到页集',
-    contexts: ['page', 'selection', 'link']
-  });
-});
-
-chrome.contextMenus?.onClicked.addListener(async (info, tab) => {
-  if (info.menuItemId === 'pageManagerMenu' && tab && tab.url && tab.title) {
-    try {
-      const url = info.linkUrl || tab.url;
-      
-      if (isSpecialPage(url)) {
-        chrome.notifications?.create({
-          type: 'basic',
-          iconUrl: 'icons/icon-128.png',
-          title: '页集',
-          message: '该页面不支持收藏',
-        });
-        return;
-      }
-      
-      const title = tab.title || url;
-      const favicon = tab.favIconUrl || '';
-      
-      const data = await getStorageData();
-      
-      const isDuplicate = data.pages.some(p => p.url === url);
-      
-      if (isDuplicate) {
-        console.log('页面已收藏');
-        chrome.notifications?.create({
-          type: 'basic',
-          iconUrl: 'icons/icon-128.png',
-          title: '页集',
-          message: '该页面已收藏',
-        });
-        return;
-      }
-      
-      const newPage = {
-        url,
-        title,
-        favicon,
-        tags: [],
-        groups: ['default'],
-        id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      };
-      
-      data.pages.push(newPage);
-      await setStorageData(data);
-      
-      console.log('页面收藏成功:', title);
-      
-      chrome.notifications?.create({
-        type: 'basic',
-        iconUrl: 'icons/icon-128.png',
-        title: '页集',
-        message: `已收藏: ${title}`,
-      });
-    } catch (error) {
-      console.error('收藏失败:', error);
-      chrome.notifications?.create({
-        type: 'basic',
-        iconUrl: 'icons/icon-128.png',
-        title: '页集',
-        message: '收藏失败，请重试',
-      });
-    }
   }
 });
 
@@ -101,7 +28,12 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 function updateExtensionIcon(tab: chrome.tabs.Tab) {
   const isSpecial = tab.url ? isSpecialPage(tab.url) : true;
   
-  const iconPath = 'icons/icon.svg';
+  const iconPath = {
+    '16': 'icons/icon-16.png',
+    '32': 'icons/icon-32.png',
+    '48': 'icons/icon-48.png',
+    '128': 'icons/icon-128.png'
+  };
   
   chrome.action.setIcon({
     tabId: tab.id,

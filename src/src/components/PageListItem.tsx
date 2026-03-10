@@ -78,7 +78,7 @@ export const PageListItem: React.FC<PageListItemProps> = ({
         <h3 className="font-medium text-gray-900 truncate" title={page.title}>
           {page.title}
         </h3>
-        <p className="text-sm text-gray-500 truncate" title={page.url}>
+        <p className="text-sm text-gray-500" title={page.url}>
           {formatUrl(page.url)}
         </p>
         

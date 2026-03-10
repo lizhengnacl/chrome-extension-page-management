@@ -10,13 +10,12 @@ export function truncate(text: string, maxLength: number): string {
 }
 
 /** 格式化URL显示 */
-export function formatUrl(url: string, maxLength = 50): string {
+export function formatUrl(url: string): string {
   try {
     const urlObj = new URL(url);
-    const simplified = `${urlObj.hostname}${urlObj.pathname}`;
-    return truncate(simplified, maxLength);
+    return `${urlObj.hostname}${urlObj.pathname}`;
   } catch {
-    return truncate(url, maxLength);
+    return url;
   }
 }
 
