@@ -45,6 +45,7 @@ interface SortableGroupItemProps {
   onTogglePin: (groupId: string) => void;
   onEdit: (group: Group) => void;
   onDelete: (groupId: string) => void;
+  onOpenGroup: (groupId: string) => void;
   pageCount: number;
 }
 
@@ -55,6 +56,7 @@ const SortableGroupItem: React.FC<SortableGroupItemProps> = ({
   onTogglePin,
   onEdit,
   onDelete,
+  onOpenGroup,
   pageCount,
 }) => {
   const {
@@ -173,6 +175,19 @@ const SortableGroupItem: React.FC<SortableGroupItemProps> = ({
                     <span className={group.pinned ? "text-amber-600" : ""}>
                       {group.pinned ? "取消置顶" : "置顶分组"}
                     </span>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenGroup(group.id);
+                      setMenuOpen(false);
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-50 transition-colors"
+                  >
+                    <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    <span>一键打开分组</span>
                   </button>
                   {group.id !== 'default' && (
                     <>
@@ -885,6 +900,7 @@ const NewTab: React.FC = () => {
                           onTogglePin={handleTogglePinGroup}
                           onEdit={handleEditGroup}
                           onDelete={handleDeleteGroup}
+                          onOpenGroup={handleOpenGroup}
                           pageCount={pages.filter(p => p.groups.includes(group.id)).length}
                         />
                       ))}
@@ -908,21 +924,7 @@ const NewTab: React.FC = () => {
                     </div>
                   )}
                 </div>
-                {selectedGroup && (
-                  <div className="px-3 pb-3">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="w-full"
-                      onClick={() => handleOpenGroup(selectedGroup)}
-                    >
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                      一键打开分组
-                    </Button>
-                  </div>
-                )}
+
               </div>
 
               {/* 标签树 */}
