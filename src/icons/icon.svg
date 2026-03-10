@@ -1,10 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#2563EB;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1D4ED8;stop-opacity:1" />
     </linearGradient>
   </defs>
-  <rect x="18" y="18" width="92" height="92" rx="20" fill="url(#blueGradient)"/>
-  <path d="M44 44a8 8 0 018-8h24a8 8 0 018 8v56l-20-10L44 100V44z" fill="white"/>
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="url(#bgGradient)"/>
+  
+  <g transform="translate(10, 18)">
+    <rect x="0" y="0" width="72" height="64" rx="8" fill="rgba(255,255,255,0.25)"/>
+    <rect x="8" y="8" width="72" height="64" rx="8" fill="rgba(255,255,255,0.45)"/>
+    <rect x="16" y="16" width="72" height="64" rx="8" fill="white"/>
+    
+    <g transform="translate(20, 26)">
+      <rect x="0" y="0" width="24" height="4" rx="2" fill="#3B82F6"/>
+      <rect x="0" y="10" width="52" height="3" rx="1.5" fill="#E5E7EB"/>
+      <rect x="0" y="18" width="44" height="3" rx="1.5" fill="#E5E7EB"/>
+      <rect x="0" y="26" width="48" height="3" rx="1.5" fill="#E5E7EB"/>
+    </g>
+    
+    <g transform="translate(88, 14)">
+      <circle cx="8" cy="8" r="3" fill="#3B82F6"/>
+      <circle cx="8" cy="26" r="3" fill="#60A5FA"/>
+      <circle cx="8" cy="44" r="3" fill="#93C5FD"/>
+    </g>
+  </g>
 </svg>
