@@ -76,6 +76,7 @@ const Popup: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    const finalTags = tagInputRef.current?.getAllTags() || formData.tags;
     tagInputRef.current?.flushInput();
     
     if (!formData.url || !formData.title) {
@@ -92,7 +93,7 @@ const Popup: React.FC = () => {
         // 检查是否有变更
         const hasChanges = 
           existingPage.title !== formData.title ||
-          JSON.stringify(existingPage.tags.sort()) !== JSON.stringify(formData.tags.sort()) ||
+          JSON.stringify(existingPage.tags.sort()) !== JSON.stringify(finalTags.sort()) ||
           JSON.stringify(existingPage.groups.sort()) !== JSON.stringify(groups.sort());
 
         if (!hasChanges) {
@@ -104,7 +105,7 @@ const Popup: React.FC = () => {
         // 有变更，更新页面
         const result = await pageStorage.update(existingPage.id, {
           title: formData.title,
-          tags: formData.tags,
+          tags: finalTags,
           groups,
         });
 
@@ -120,7 +121,7 @@ const Popup: React.FC = () => {
           url: formData.url,
           title: formData.title,
           favicon: formData.favicon,
-          tags: formData.tags,
+          tags: finalTags,
           groups,
         });
 

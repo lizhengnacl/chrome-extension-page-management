@@ -14,6 +14,7 @@ interface TagInputProps {
 
 export interface TagInputRef {
   flushInput: () => void;
+  getAllTags: () => string[];
 }
 
 export const TagInput = React.forwardRef<TagInputRef, TagInputProps>(({
@@ -34,8 +35,19 @@ export const TagInput = React.forwardRef<TagInputRef, TagInputProps>(({
     }
   }, [inputValue, value]);
 
+  const getAllTags = useCallback(() => {
+    if (inputValue.trim()) {
+      const trimmed = inputValue.trim();
+      if (!value.includes(trimmed)) {
+        return [...value, trimmed];
+      }
+    }
+    return [...value];
+  }, [inputValue, value]);
+
   React.useImperativeHandle(ref, () => ({
     flushInput,
+    getAllTags,
   }));
 
   // 加载标签建议
@@ -125,7 +137,6 @@ export const TagInput = React.forwardRef<TagInputRef, TagInputProps>(({
           value={inputValue}
           onChange={e => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          onBlur={flushInput}
           onFocus={() => inputValue.trim() && suggestions.length > 0 && setShowSuggestions(true)}
           placeholder={value.length === 0 ? placeholder : ''}
           className="flex-1 min-w-[120px] bg-transparent border-none focus:outline-none text-sm text-gray-900 placeholder-gray-400"
@@ -139,7 +150,10 @@ export const TagInput = React.forwardRef<TagInputRef, TagInputProps>(({
             <button
               key={suggestion}
               type="button"
-              onClick={() => addTag(suggestion)}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                addTag(suggestion);
+              }}
               className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 transition-colors ${
                 index === selectedIndex ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
               }`}
