@@ -1,9 +1,9 @@
 /**
  * 标签输入组件
- * 支持多级标签路径输入和自动补全
+ * 支持下拉多选、搜索和新建标签
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { tagStorage } from '../storage';
 
 interface TagInputProps {
@@ -20,157 +20,216 @@ export interface TagInputRef {
 export const TagInput = React.forwardRef<TagInputRef, TagInputProps>(({
   value,
   onChange,
-  placeholder = '输入标签，如：技术/AI/大模型',
+  placeholder = '选择或搜索标签...',
 }, ref) => {
-  const [inputValue, setInputValue] = useState('');
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [allTags, setAllTags] = useState<string[]>([]);
+  const [isCreating, setIsCreating] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const flushInput = useCallback(() => {
-    if (inputValue.trim()) {
-      addTag(inputValue);
-    }
-  }, [inputValue, value]);
+  const flushInput = () => {
+  };
 
-  const getAllTags = useCallback(() => {
-    if (inputValue.trim()) {
-      const trimmed = inputValue.trim();
-      if (!value.includes(trimmed)) {
-        return [...value, trimmed];
-      }
-    }
+  const getAllTags = () => {
     return [...value];
-  }, [inputValue, value]);
+  };
 
   React.useImperativeHandle(ref, () => ({
     flushInput,
     getAllTags,
   }));
 
-  // 加载标签建议
+  // 加载标签列表
   useEffect(() => {
-    if (inputValue.trim()) {
-      tagStorage.searchTags(inputValue).then(paths => {
-        setSuggestions(paths.filter(p => !value.includes(p)));
-        setShowSuggestions(paths.length > 0);
-      });
-    } else {
-      setSuggestions([]);
-      setShowSuggestions(false);
+    if (isOpen) {
+      tagStorage.getAllPaths().then(setAllTags);
     }
-  }, [inputValue, value]);
+  }, [isOpen]);
 
-  // 点击外部关闭建议列表
+  // 点击外部关闭下拉框
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setShowSuggestions(false);
+        setIsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const addTag = (tagPath: string) => {
-    const trimmed = tagPath.trim();
-    if (trimmed && !value.includes(trimmed)) {
-      onChange([...value, trimmed]);
-      // 自动创建标签树
-      tagStorage.addTag(trimmed);
+  // 打开时聚焦搜索框
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => searchInputRef.current?.focus(), 0);
     }
-    setInputValue('');
-    setShowSuggestions(false);
-    setSelectedIndex(-1);
+  }, [isOpen]);
+
+  const filteredTags = allTags.filter(t =>
+    t.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const canCreateNew = searchQuery.trim() && !allTags.some(t =>
+    t.toLowerCase() === searchQuery.toLowerCase()
+  );
+
+  const toggleTag = (tag: string) => {
+    if (value.includes(tag)) {
+      onChange(value.filter(t => t !== tag));
+    } else {
+      onChange([...value, tag]);
+      tagStorage.addTag(tag);
+    }
   };
 
-  const removeTag = (tagToRemove: string) => {
-    onChange(value.filter(t => t !== tagToRemove));
+  const handleCreateTag = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setIsCreating(true);
+    try {
+      await tagStorage.addTag(searchQuery.trim());
+      onChange([...value, searchQuery.trim()]);
+      setSearchQuery('');
+      const updatedTags = await tagStorage.getAllPaths();
+      setAllTags(updatedTags);
+    } finally {
+      setIsCreating(false);
+    }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (selectedIndex >= 0 && suggestions[selectedIndex]) {
-        addTag(suggestions[selectedIndex]);
-      } else {
-        addTag(inputValue);
-      }
-    } else if (e.key === 'Backspace' && !inputValue && value.length > 0) {
-      removeTag(value[value.length - 1]);
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIndex(prev => Math.min(prev + 1, suggestions.length - 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex(prev => Math.max(prev - 1, -1));
-    } else if (e.key === 'Escape') {
-      setShowSuggestions(false);
-    }
+  const removeTag = (tag: string) => {
+    onChange(value.filter(t => t !== tag));
   };
 
   return (
     <div ref={containerRef} className="relative">
-      <div className="min-h-[42px] flex flex-wrap items-center gap-2 p-2 bg-white border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all">
-        {value.map(tag => (
-          <span
-            key={tag}
-            className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-sm rounded-md"
-          >
-            {tag}
-            <button
-              type="button"
-              onClick={() => removeTag(tag)}
-              className="hover:text-blue-900 focus:outline-none"
-            >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </span>
-        ))}
-        <input
-          ref={inputRef}
-          type="text"
-          value={inputValue}
-          onChange={e => setInputValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onFocus={() => inputValue.trim() && suggestions.length > 0 && setShowSuggestions(true)}
-          placeholder={value.length === 0 ? placeholder : ''}
-          className="flex-1 min-w-[120px] bg-transparent border-none focus:outline-none text-sm text-gray-900 placeholder-gray-400"
-        />
-      </div>
-
-      {/* 建议列表 */}
-      {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-          {suggestions.map((suggestion, index) => (
-            <button
-              key={suggestion}
-              type="button"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                addTag(suggestion);
-              }}
-              className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 transition-colors ${
-                index === selectedIndex ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                </svg>
-                {suggestion}
+      {/* 触发按钮 */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full min-h-[42px] flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+      >
+        <div className="flex flex-wrap items-center gap-1 flex-1">
+          {value.length === 0 ? (
+            <span className="text-gray-400 text-sm">{placeholder}</span>
+          ) : (
+            value.map(tag => (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-sm rounded"
+              >
+                {tag}
               </span>
-            </button>
+            ))
+          )}
+        </div>
+        <svg 
+          className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {/* 下拉框 */}
+      {isOpen && (
+        <div className="absolute z-50 w-full bottom-full mb-1 bg-white border border-gray-200 rounded-lg shadow-lg">
+          {/* 搜索框 */}
+          <div className="p-2 border-b border-gray-100">
+            <div className="relative">
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="搜索标签..."
+                className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+
+          {/* 标签列表 */}
+          <div className="max-h-36 overflow-y-auto">
+            {filteredTags.length === 0 ? (
+              <div className="px-3 py-4 text-center text-sm text-gray-500">
+                暂无标签
+              </div>
+            ) : (
+              filteredTags.map(tag => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => toggleTag(tag)}
+                  className={`w-full flex items-center justify-between px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${
+                    value.includes(tag) ? 'bg-blue-50' : ''
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                    {tag}
+                  </span>
+                  {value.includes(tag) && (
+                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </button>
+              ))
+            )}
+          </div>
+
+          {/* 创建新标签 */}
+          {canCreateNew && (
+            <div className="p-2 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={handleCreateTag}
+                disabled={isCreating}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md transition-colors disabled:opacity-50"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                创建标签 "{searchQuery.trim()}"
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 已选标签（外部显示） */}
+      {value.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {value.map(tag => (
+            <span
+              key={tag}
+              className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-md"
+            >
+              {tag}
+              <button
+                type="button"
+                onClick={() => removeTag(tag)}
+                className="hover:text-blue-900 focus:outline-none"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </span>
           ))}
         </div>
       )}
 
       <p className="mt-1 text-xs text-gray-500">
-        输入技术/AI/大模型格式创建多级标签，按回车或点击保存添加
+        支持多级标签格式，如：技术/AI/大模型
       </p>
     </div>
   );
