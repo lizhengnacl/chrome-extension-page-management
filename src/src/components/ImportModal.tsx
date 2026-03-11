@@ -23,13 +23,38 @@ interface FolderNode {
   expanded: boolean;
 }
 
+const highlightText = (text: string, query: string) => {
+  if (!query.trim()) {
+    return <span>{text}</span>;
+  }
+  
+  const lowerText = text.toLowerCase();
+  const lowerQuery = query.toLowerCase();
+  const index = lowerText.indexOf(lowerQuery);
+  
+  if (index === -1) {
+    return <span>{text}</span>;
+  }
+  
+  return (
+    <span>
+      {text.substring(0, index)}
+      <span className="bg-yellow-200 font-medium">
+        {text.substring(index, index + query.length)}
+      </span>
+      {text.substring(index + query.length)}
+    </span>
+  );
+};
+
 const BookmarkItem: React.FC<{
   node: BookmarkNode | FolderNode;
   selectedIds: Set<string>;
   onToggle: (id: string, isSelected: boolean) => void;
   onToggleFolder: (id: string) => void;
   level: number;
-}> = ({ node, selectedIds, onToggle, onToggleFolder, level }) => {
+  searchQuery?: string;
+}> = ({ node, selectedIds, onToggle, onToggleFolder, level, searchQuery = '' }) => {
   const isFolder = 'isFolder' in node;
   const isSelected = selectedIds.has(node.id);
   const hasChildren = !isFolder ? false : node.children.length > 0;
@@ -116,7 +141,10 @@ const BookmarkItem: React.FC<{
         ) : null}
         
         <span className={`flex-1 text-sm truncate ${isFolder ? 'font-medium' : ''}`}>
-          {node.title || (node.url ? new URL(node.url).hostname : '无标题')}
+          {highlightText(
+            node.title || (node.url ? new URL(node.url).hostname : '无标题'),
+            searchQuery
+          )}
         </span>
         
         {isFolder && childCount > 0 && (
@@ -144,6 +172,7 @@ const BookmarkItem: React.FC<{
                 onToggle={onToggle}
                 onToggleFolder={onToggleFolder}
                 level={level + 1}
+                searchQuery={searchQuery}
               />
             ))}
         </div>
@@ -159,6 +188,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
 }) => {
   const [step, setStep] = useState<'select' | 'importing' | 'complete'>('select');
   const [bookmarkTree, setBookmarkTree] = useState<(BookmarkNode | FolderNode)[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [importProgress, setImportProgress] = useState<{
     imported: number;
@@ -176,6 +206,41 @@ export const ImportModal: React.FC<ImportModalProps> = ({
       };
     }
     return node;
+  };
+
+  const filterBookmarkTree = (
+    nodes: (BookmarkNode | FolderNode)[], 
+    query: string
+  ): (BookmarkNode | FolderNode)[] => {
+    if (!query.trim()) {
+      return nodes;
+    }
+    
+    const lowerQuery = query.toLowerCase();
+    const result: (BookmarkNode | FolderNode)[] = [];
+    
+    for (const node of nodes) {
+      if ('isFolder' in node) {
+        const matchesTitle = node.title.toLowerCase().includes(lowerQuery);
+        const filteredChildren = filterBookmarkTree(node.children, query);
+        
+        if (matchesTitle || filteredChildren.length > 0) {
+          result.push({
+            ...node,
+            children: filteredChildren,
+            expanded: true
+          });
+        }
+      } else {
+        const matchesTitle = node.title?.toLowerCase().includes(lowerQuery) || false;
+        const matchesUrl = node.url?.toLowerCase().includes(lowerQuery) || false;
+        if (matchesTitle || matchesUrl) {
+          result.push(node);
+        }
+      }
+    }
+    
+    return result;
   };
 
   const loadBookmarks = useCallback(async () => {
@@ -280,15 +345,19 @@ export const ImportModal: React.FC<ImportModalProps> = ({
     }
   };
 
-  const totalBookmarks = bookmarkTree.reduce((sum, node) => {
+  const filteredBookmarkTree = React.useMemo(() => {
+    return filterBookmarkTree(bookmarkTree, searchQuery);
+  }, [bookmarkTree, searchQuery]);
+
+  const totalBookmarks = React.useMemo(() => {
     const count = (n: BookmarkNode | FolderNode): number => {
       if ('isFolder' in n) {
         return n.children.reduce((s, child) => s + count(child), 0);
       }
       return n.url ? 1 : 0;
     };
-    return sum + count(node);
-  }, 0);
+    return filteredBookmarkTree.reduce((sum, node) => sum + count(node), 0);
+  }, [filteredBookmarkTree]);
 
   return (
     <Modal
@@ -324,6 +393,19 @@ export const ImportModal: React.FC<ImportModalProps> = ({
       <div className="space-y-4">
         {step === 'select' && (
           <>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="搜索书签标题、地址或文件夹..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600">
                 共找到 {totalBookmarks} 个书签
@@ -346,9 +428,15 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                     <p className="text-sm text-gray-600">正在加载书签...</p>
                   </div>
                 </div>
+              ) : filteredBookmarkTree.length === 0 ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="flex flex-col items-center gap-3">
+                    <p className="text-sm text-gray-600">未找到匹配的书签</p>
+                  </div>
+                </div>
               ) : (
                 <div className="p-2">
-                  {bookmarkTree
+                  {filteredBookmarkTree
                     .sort((a, b) => {
                       const aIsFolder = 'isFolder' in a || (!('url' in a) || !a.url);
                       const bIsFolder = 'isFolder' in b || (!('url' in b) || !b.url);
@@ -364,6 +452,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                         onToggle={handleToggle}
                         onToggleFolder={handleToggleFolder}
                         level={0}
+                        searchQuery={searchQuery}
                       />
                     ))}
                 </div>
