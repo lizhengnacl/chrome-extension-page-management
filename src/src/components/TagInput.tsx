@@ -136,7 +136,7 @@ export const TagInput = React.forwardRef<TagInputRef, TagInputProps>(({
 
       {/* 下拉框 */}
       {isOpen && (
-        <div className="absolute z-50 w-full bottom-full mb-1 bg-white border border-gray-200 rounded-lg shadow-lg">
+        <div className="absolute z-50 w-full top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
           {/* 搜索框 */}
           <div className="p-2 border-b border-gray-100">
             <div className="relative">
@@ -202,29 +202,6 @@ export const TagInput = React.forwardRef<TagInputRef, TagInputProps>(({
               </button>
             </div>
           )}
-        </div>
-      )}
-
-      {/* 已选标签（外部显示） */}
-      {value.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-2">
-          {value.map(tag => (
-            <span
-              key={tag}
-              className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-md"
-            >
-              {tag}
-              <button
-                type="button"
-                onClick={() => removeTag(tag)}
-                className="hover:text-blue-900 focus:outline-none"
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </span>
-          ))}
         </div>
       )}
 

@@ -328,7 +328,7 @@ const NewTab: React.FC = () => {
   // 筛选状态
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('');
-  const [selectedGroup, setSelectedGroup] = useState<string>('frequent');
+  const [selectedGroup, setSelectedGroup] = useState<string>('');
   
   // 编辑弹窗状态
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -1121,6 +1121,7 @@ const NewTab: React.FC = () => {
         isOpen={editModalOpen}
         onClose={() => setEditModalOpen(false)}
         title="编辑页面信息"
+        size="lg"
         footer={
           <>
             <Button variant="ghost" onClick={() => setEditModalOpen(false)}>
