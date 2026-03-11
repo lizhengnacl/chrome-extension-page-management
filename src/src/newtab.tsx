@@ -879,7 +879,7 @@ const NewTab: React.FC = () => {
                 </div>
                 <div 
                   ref={groupListRef}
-                  className="p-2 max-h-64 overflow-y-auto overflow-x-visible relative"
+                  className="p-2 overflow-y-auto overflow-x-visible relative"
                 >
                   <DndContext
                     sensors={sensors}
@@ -916,13 +916,7 @@ const NewTab: React.FC = () => {
                       ) : null}
                     </DragOverlay>
                   </DndContext>
-                  {groups.length > 4 && showScrollHint && (
-                    <div className="sticky bottom-[-8px] left-[-8px] right-[-8px] h-12 bg-gradient-to-t from-white via-white/95 to-transparent pointer-events-none flex items-end justify-center pb-3">
-                      <svg className="w-4 h-4 text-gray-400 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  )}
+
                 </div>
 
               </div>
