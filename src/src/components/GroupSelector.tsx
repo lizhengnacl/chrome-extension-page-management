@@ -53,9 +53,10 @@ export const GroupSelector: React.FC<GroupSelectorProps> = ({
   );
 
   const selectedGroups = groups.filter(g => value.includes(g.id));
+  const reservedNames = ['常用地址', '未分类'];
   const canCreateNew = searchQuery.trim() && !groups.some(g =>
     g.name.toLowerCase() === searchQuery.toLowerCase()
-  );
+  ) && !reservedNames.includes(searchQuery.trim());
 
   const toggleGroup = (groupId: string) => {
     if (value.includes(groupId)) {
@@ -67,13 +68,21 @@ export const GroupSelector: React.FC<GroupSelectorProps> = ({
 
   const handleCreateGroup = async () => {
     if (!searchQuery.trim()) return;
+    
+    const reservedNames = ['常用地址', '未分类'];
+    if (reservedNames.includes(searchQuery.trim())) {
+      return;
+    }
+    
     setIsCreating(true);
     try {
       const newGroup = await groupStorage.add(searchQuery.trim());
-      onChange([...value, newGroup.id]);
-      setSearchQuery('');
-      const updatedGroups = await groupStorage.getAll();
-      setGroups(updatedGroups);
+      if (newGroup) {
+        onChange([...value, newGroup.id]);
+        setSearchQuery('');
+        const updatedGroups = await groupStorage.getAll();
+        setGroups(updatedGroups);
+      }
     } finally {
       setIsCreating(false);
     }

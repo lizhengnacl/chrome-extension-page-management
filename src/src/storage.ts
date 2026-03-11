@@ -24,7 +24,8 @@ const KEYS = {
 
 function getDefaultGroups(): Group[] {
   return [
-    { id: 'default', name: '未分类', order: 0, pinned: false, createdAt: Date.now() }
+    { id: 'frequent', name: '常用地址', order: 0, pinned: false, createdAt: Date.now() },
+    { id: 'default', name: '未分类', order: 1, pinned: false, createdAt: Date.now() }
   ];
 }
 
@@ -158,7 +159,29 @@ async function getPages(): Promise<Page[]> {
 async function getGroups(): Promise<Group[]> {
   try {
     const result = await chrome.storage.sync.get(KEYS.groups);
-    return result[KEYS.groups] || getDefaultGroups();
+    let groups = result[KEYS.groups] || getDefaultGroups();
+    
+    // 确保"常用地址"分组存在
+    const hasFrequent = groups.some(g => g.id === 'frequent');
+    if (!hasFrequent) {
+      const maxOrder = Math.max(...groups.map(g => g.order), 0);
+      groups.unshift({ 
+        id: 'frequent', 
+        name: '常用地址', 
+        order: -1, 
+        pinned: false, 
+        createdAt: Date.now() 
+      });
+      // 保存更新后的分组
+      await setStorageData({
+        pages: await getPages(),
+        groups,
+        tags: await getTags(),
+        settings: await getSettings()
+      });
+    }
+    
+    return groups;
   } catch (error) {
     console.error('获取分组数据失败:', error);
     return getDefaultGroups();
@@ -443,7 +466,12 @@ export const groupStorage = {
     return data.groups.find(g => g.id === id);
   },
 
-  async add(name: string, description?: string): Promise<Group> {
+  async add(name: string, description?: string): Promise<Group | null> {
+    const reservedNames = ['常用地址', '未分类'];
+    if (reservedNames.includes(name.trim())) {
+      return null;
+    }
+    
     const data = await getStorageData();
     const maxOrder = Math.max(...data.groups.map(g => g.order), 0);
     
@@ -474,6 +502,13 @@ export const groupStorage = {
     const data = await getStorageData();
     const index = data.groups.findIndex(g => g.id === id);
     if (index === -1) return false;
+
+    if (updates.name) {
+      const reservedNames = ['常用地址', '未分类'];
+      if (reservedNames.includes(updates.name.trim())) {
+        return false;
+      }
+    }
 
     data.groups[index] = { ...data.groups[index], ...updates };
     return setStorageData(data);

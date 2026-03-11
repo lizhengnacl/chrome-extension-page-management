@@ -299,7 +299,7 @@ const NewTab: React.FC = () => {
   // 筛选状态
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('');
-  const [selectedGroup, setSelectedGroup] = useState<string>('');
+  const [selectedGroup, setSelectedGroup] = useState<string>('frequent');
   
   // 编辑弹窗状态
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -529,6 +529,12 @@ const NewTab: React.FC = () => {
       return;
     }
 
+    const reservedNames = ['常用地址', '未分类'];
+    if (reservedNames.includes(editGroupForm.name.trim())) {
+      showToast('分组名称不能为"常用地址"或"未分类"', 'error');
+      return;
+    }
+
     const success = await groupStorage.update(editingGroup.id, {
       name: editGroupForm.name,
       description: editGroupForm.description,
@@ -643,6 +649,12 @@ const NewTab: React.FC = () => {
   const handleCreateGroup = async () => {
     if (!createGroupForm.name.trim()) {
       showToast('分组名称不能为空', 'error');
+      return;
+    }
+
+    const reservedNames = ['常用地址', '未分类'];
+    if (reservedNames.includes(createGroupForm.name.trim())) {
+      showToast('分组名称不能为"常用地址"或"未分类"', 'error');
       return;
     }
 
