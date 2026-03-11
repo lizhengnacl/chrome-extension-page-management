@@ -10,6 +10,7 @@ import { Modal, ConfirmModal } from './components/ui/Modal';
 import { Toast, showToast } from './components/ui/Toast';
 import { TagTree } from './components/TagTree';
 import { PageListItem } from './components/PageListItem';
+import { SortablePageItem } from './components/SortablePageItem';
 import { StorageWarning } from './components/StorageWarning';
 import { TagInput, type TagInputRef } from './components/TagInput';
 import { GroupSelector } from './components/GroupSelector';
@@ -235,6 +236,7 @@ const NewTab: React.FC = () => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [tags, setTags] = useState<TagNode[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [pageActiveId, setPageActiveId] = useState<string | null>(null);
   const [showScrollHint, setShowScrollHint] = useState(true);
   const tagInputRef = useRef<TagInputRef>(null);
   const groupListRef = useRef<HTMLDivElement>(null);
@@ -274,6 +276,33 @@ const NewTab: React.FC = () => {
     }
 
     setActiveId(null);
+  };
+
+  const handlePageDragStart = (event: any) => {
+    setPageActiveId(event.active.id);
+  };
+
+  const handlePageDragEnd = async (event: any) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = pages.findIndex((item) => item.id === active.id);
+      const newIndex = pages.findIndex((item) => item.id === over.id);
+      
+      // 更新数组顺序
+      let reorderedPages = arrayMove([...pages], oldIndex, newIndex);
+      
+      // 同时更新每个页面的 order 字段，确保 filteredPages 按正确顺序显示
+      reorderedPages = reorderedPages.map((page, index) => ({
+        ...page,
+        order: index
+      }));
+      
+      setPages(reorderedPages);
+      await pageStorage.reorder(reorderedPages.map(p => p.id));
+    }
+
+    setPageActiveId(null);
   };
 
   useEffect(() => {
@@ -366,7 +395,25 @@ const NewTab: React.FC = () => {
       groupStorage.getAll(),
       tagStorage.getAll(),
     ]);
-    setPages(pagesData);
+    
+    // 迁移旧数据，确保所有页面都有 order 字段
+    let needsMigration = false;
+    const migratedPages = pagesData.map((page, index) => {
+      if (page.order === undefined) {
+        needsMigration = true;
+        return { ...page, order: index };
+      }
+      return page;
+    });
+
+    if (needsMigration) {
+      // 保存迁移后的数据
+      const data = await getStorageData();
+      data.pages = migratedPages;
+      await setStorageData(data);
+    }
+
+    setPages(migratedPages);
     setGroups(groupsData);
     setTags(tagsData);
   };
@@ -427,8 +474,10 @@ const NewTab: React.FC = () => {
       result = result.filter(page => page.groups.includes(selectedGroup));
     }
 
-    // 按标题排序
-    return sortByTitle(result);
+    // 按 order 排序
+    return result.sort((a, b) => {
+      return (a.order || 0) - (b.order || 0);
+    });
   }, [pages, searchQuery, selectedTag, selectedGroup, groups]);
 
   // 搜索防抖
@@ -1011,20 +1060,57 @@ const NewTab: React.FC = () => {
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {filteredPages.map(page => (
-                  <PageListItem
-                    key={page.id}
-                    page={page}
-                    groups={groups}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onRemoveFromGroup={handleRemoveFromGroup}
-                    currentGroupId={selectedGroup}
-                    onRefresh={loadData}
-                  />
-                ))}
-              </div>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handlePageDragStart}
+                onDragEnd={handlePageDragEnd}
+              >
+                <SortableContext
+                  items={filteredPages.map(p => p.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-3">
+                    {filteredPages.map(page => (
+                      <SortablePageItem
+                        key={page.id}
+                        page={page}
+                        groups={groups}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        onRemoveFromGroup={handleRemoveFromGroup}
+                        currentGroupId={selectedGroup}
+                        onRefresh={loadData}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+                <DragOverlay>
+                  {pageActiveId ? (
+                    <div className="opacity-80 bg-white rounded-xl shadow-xl border border-blue-200 p-4 flex items-center gap-4">
+                      {(() => {
+                        const page = filteredPages.find(p => p.id === pageActiveId);
+                        return page ? (
+                          <>
+                            {page.favicon ? (
+                              <img
+                                src={page.favicon}
+                                alt=""
+                                className="w-6 h-6 object-contain"
+                              />
+                            ) : (
+                              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
+                              </svg>
+                            )}
+                            <div className="font-medium text-gray-900 truncate max-w-xs">{page.title}</div>
+                          </>
+                        ) : null;
+                      })()}
+                    </div>
+                  ) : null}
+                </DragOverlay>
+              </DndContext>
             )}
           </main>
         </div>

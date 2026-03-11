@@ -11,6 +11,7 @@ export interface Page {
   favicon: string;
   tags: string[]; // 多级标签路径数组，如 ["技术/AI", "工具"]
   groups: string[]; // 所属分组ID数组
+  order: number; // 排序权重
   createdAt: number;
   updatedAt: number;
 }

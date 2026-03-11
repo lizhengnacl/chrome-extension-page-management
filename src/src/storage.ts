@@ -299,7 +299,9 @@ export function generateId(): string {
 export const pageStorage = {
   async getAll(): Promise<Page[]> {
     const data = await getStorageData();
-    return data.pages;
+    return data.pages.sort((a, b) => {
+      return (a.order || 0) - (b.order || 0);
+    });
   },
 
   async getById(id: string): Promise<Page | undefined> {
@@ -319,7 +321,7 @@ export const pageStorage = {
     );
   },
 
-  async add(page: Omit<Page, 'id' | 'createdAt' | 'updatedAt'>): Promise<Page | null> {
+  async add(page: Omit<Page, 'id' | 'order' | 'createdAt' | 'updatedAt'>): Promise<Page | null> {
     const data = await getStorageData();
     
     const isDuplicate = await this.checkDuplicate(page.url);
@@ -328,9 +330,11 @@ export const pageStorage = {
       return null;
     }
 
+    const maxOrder = data.pages.length > 0 ? Math.max(...data.pages.map(p => p.order || 0), -1) : -1;
     const newPage: Page = {
       ...page,
       id: generateId(),
+      order: maxOrder + 1,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
@@ -423,6 +427,19 @@ export const pageStorage = {
       }
     });
 
+    return setStorageData(data);
+  },
+
+  async reorder(pageIds: string[]): Promise<boolean> {
+    const data = await getStorageData();
+    
+    pageIds.forEach((pageId, index) => {
+      const page = data.pages.find(p => p.id === pageId);
+      if (page) {
+        page.order = index;
+      }
+    });
+    
     return setStorageData(data);
   },
 };
