@@ -916,7 +916,7 @@ const NewTab: React.FC = () => {
         <div className="flex gap-6">
           {/* 侧边栏 */}
           <aside className="w-64 flex-shrink-0">
-            <div className="sticky top-24">
+            <div className="sticky top-24 max-h-[calc(100vh-96px)] overflow-y-auto">
               {/* 分组列表 */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
                 <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
