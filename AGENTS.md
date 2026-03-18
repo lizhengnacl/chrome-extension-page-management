@@ -62,7 +62,6 @@ pnpm generate-icons
 - `storage`: 数据存储与同步
 - `tabs`: 标签页管理
 - `bookmarks`: 书签导入导出
-- `notifications`: 通知提示
 
 ## 快捷键
 

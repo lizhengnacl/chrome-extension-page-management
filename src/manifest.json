@@ -6,8 +6,7 @@
   "permissions": [
     "storage",
     "tabs",
-    "bookmarks",
-    "notifications"
+    "bookmarks"
   ],
   "action": {
     "default_popup": "popup.html",
