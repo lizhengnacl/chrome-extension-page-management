@@ -6,7 +6,7 @@
  * 优化写入操作，避免频繁调用 chrome.storage.sync.set
  */
 
-import type { Page, Group, TagNode, StorageData, StorageUsage } from './types';
+import type { Page, Group, TagNode, StorageData, StorageUsage, UserSettings } from './types';
 import { isSamePage } from './utils';
 
 const STORAGE_PREFIX = 'pageManager_';
@@ -22,6 +22,8 @@ const KEYS = {
   pageChunk: (index: number) => STORAGE_PREFIX + 'pages_' + index,
 } as const;
 
+const PAGE_CHUNK_PREFIX = STORAGE_PREFIX + 'pages_';
+
 function getDefaultGroups(): Group[] {
   return [
     { id: 'frequent', name: '常用地址', order: 0, pinned: false, createdAt: Date.now() },
@@ -29,10 +31,11 @@ function getDefaultGroups(): Group[] {
   ];
 }
 
-function getDefaultSettings() {
+function getDefaultSettings(): UserSettings {
   return {
     lastSyncAt: Date.now(),
     storageWarningShown: false,
+    lastSelectedGroupId: '',
   };
 }
 
@@ -133,7 +136,7 @@ async function getPages(): Promise<Page[]> {
     const pageChunkKeys: string[] = [];
     
     for (const key of Object.keys(allStorage)) {
-      if (key.indexOf(STORAGE_PREFIX + 'pages_') === 0) {
+      if (key.indexOf(PAGE_CHUNK_PREFIX) === 0) {
         pageChunkKeys.push(key);
       }
     }
@@ -198,10 +201,13 @@ async function getTags(): Promise<TagNode[]> {
   }
 }
 
-async function getSettings() {
+async function getSettings(): Promise<UserSettings> {
   try {
     const result = await chrome.storage.sync.get(KEYS.settings);
-    return result[KEYS.settings] || getDefaultSettings();
+    return {
+      ...getDefaultSettings(),
+      ...(result[KEYS.settings] || {}),
+    };
   } catch (error) {
     console.error('获取设置数据失败:', error);
     return getDefaultSettings();
@@ -238,7 +244,7 @@ async function getOldPageChunkKeys(newChunkKeys: Set<string>): Promise<string[]>
   const oldKeys: string[] = [];
   
   for (const key of Object.keys(allKeys)) {
-    if (key.indexOf(STORAGE_PREFIX + 'pages_') === 0 && !newChunkKeys.has(key)) {
+    if (key.indexOf(PAGE_CHUNK_PREFIX) === 0 && !newChunkKeys.has(key)) {
       oldKeys.push(key);
     }
   }
@@ -252,7 +258,7 @@ export async function setStorageData(data: StorageData): Promise<boolean> {
     const newChunkKeys = new Set<string>();
     
     for (const key of Object.keys(updates)) {
-      if (key.indexOf(STORAGE_PREFIX + 'pages_') === 0) {
+      if (key.indexOf(PAGE_CHUNK_PREFIX) === 0) {
         newChunkKeys.add(key);
       }
     }
@@ -291,6 +297,39 @@ export async function shouldShowStorageWarning(): Promise<boolean> {
   const usage = await getStorageUsage();
   return usage.percentage >= 80;
 }
+
+export function hasPageManagerContentChanges(changes: Record<string, chrome.storage.StorageChange>): boolean {
+  return Object.keys(changes).some(key =>
+    key === KEYS.groups ||
+    key === KEYS.tags ||
+    key === KEYS.pageCount ||
+    key.indexOf(PAGE_CHUNK_PREFIX) === 0
+  );
+}
+
+export const settingsStorage = {
+  async get(): Promise<UserSettings> {
+    return getSettings();
+  },
+
+  async update(updates: Partial<UserSettings>): Promise<boolean> {
+    try {
+      const settings = {
+        ...(await getSettings()),
+        ...updates,
+      };
+      await chrome.storage.sync.set({ [KEYS.settings]: settings });
+      return true;
+    } catch (error) {
+      console.error('保存设置失败:', error);
+      return false;
+    }
+  },
+
+  async setLastSelectedGroupId(groupId: string): Promise<boolean> {
+    return this.update({ lastSelectedGroupId: groupId });
+  },
+};
 
 export function generateId(): string {
   return Date.now() + '-' + Math.random().toString(36).substr(2, 9);
@@ -376,6 +415,7 @@ export const pageStorage = {
     data.pages = [];
     // 只保留默认分组
     data.groups = data.groups.filter(g => g.id === 'default');
+    data.settings.lastSelectedGroupId = '';
     return setStorageData(data);
   },
 
@@ -537,6 +577,9 @@ export const groupStorage = {
       page.groups = page.groups.filter(gid => gid !== id);
     });
     data.groups = data.groups.filter(g => g.id !== id);
+    if (data.settings.lastSelectedGroupId === id) {
+      data.settings.lastSelectedGroupId = '';
+    }
     return setStorageData(data);
   },
 

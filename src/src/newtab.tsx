@@ -17,7 +17,15 @@ import { GroupSelector } from './components/GroupSelector';
 import { ImportModal } from './components/ImportModal';
 import { ExportModal } from './components/ExportModal';
 import { Portal } from './components/Portal';
-import { pageStorage, groupStorage, tagStorage, getStorageData, setStorageData } from './storage';
+import {
+  pageStorage,
+  groupStorage,
+  tagStorage,
+  settingsStorage,
+  hasPageManagerContentChanges,
+  getStorageData,
+  setStorageData,
+} from './storage';
 import { sortByTitle, debounce } from './utils';
 import type { Page, Group, TagNode } from './types';
 import {
@@ -240,6 +248,7 @@ const NewTab: React.FC = () => {
   const [showScrollHint, setShowScrollHint] = useState(true);
   const tagInputRef = useRef<TagInputRef>(null);
   const groupListRef = useRef<HTMLDivElement>(null);
+  const hasRestoredSelectedGroupRef = useRef(false);
 
   // 拖拽传感器
   const sensors = useSensors(
@@ -329,6 +338,11 @@ const NewTab: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('');
   const [selectedGroup, setSelectedGroup] = useState<string>('');
+
+  const updateSelectedGroup = useCallback((groupId: string) => {
+    setSelectedGroup(groupId);
+    void settingsStorage.setLastSelectedGroupId(groupId);
+  }, []);
   
   // 编辑弹窗状态
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -387,13 +401,23 @@ const NewTab: React.FC = () => {
     loadData();
     // 后台自动更新页面信息
     autoUpdatePages();
+
+    const handleStorageChange = (changes: Record<string, chrome.storage.StorageChange>, areaName: string) => {
+      if (areaName === 'sync' && hasPageManagerContentChanges(changes)) {
+        loadData();
+      }
+    };
+
+    chrome.storage.onChanged.addListener(handleStorageChange);
+    return () => chrome.storage.onChanged.removeListener(handleStorageChange);
   }, []);
 
   const loadData = async () => {
-    const [pagesData, groupsData, tagsData] = await Promise.all([
+    const [pagesData, groupsData, tagsData, settings] = await Promise.all([
       pageStorage.getAll(),
       groupStorage.getAll(),
       tagStorage.getAll(),
+      settingsStorage.get(),
     ]);
     
     // 迁移旧数据，确保所有页面都有 order 字段
@@ -416,6 +440,16 @@ const NewTab: React.FC = () => {
     setPages(migratedPages);
     setGroups(groupsData);
     setTags(tagsData);
+
+    if (!hasRestoredSelectedGroupRef.current) {
+      hasRestoredSelectedGroupRef.current = true;
+      const lastSelectedGroupId = settings.lastSelectedGroupId;
+      if (lastSelectedGroupId && groupsData.some(group => group.id === lastSelectedGroupId)) {
+        setSelectedGroup(lastSelectedGroupId);
+      } else if (lastSelectedGroupId) {
+        void settingsStorage.setLastSelectedGroupId('');
+      }
+    }
   };
 
   // 自动更新页面标题和favicon
@@ -773,7 +807,7 @@ const NewTab: React.FC = () => {
     } else if (deleteConfirmData.type === 'group' && deleteConfirmData.id) {
       success = await groupStorage.delete(deleteConfirmData.id);
       if (success && selectedGroup === deleteConfirmData.id) {
-        setSelectedGroup('');
+        updateSelectedGroup('');
       }
     } else if (deleteConfirmData.type === 'tag' && deleteConfirmData.id) {
       success = await tagStorage.deleteTag(deleteConfirmData.id);
@@ -838,7 +872,7 @@ const NewTab: React.FC = () => {
   const clearFilters = () => {
     setSearchQuery('');
     setSelectedTag('');
-    setSelectedGroup('');
+    updateSelectedGroup('');
   };
 
   return (
@@ -957,7 +991,7 @@ const NewTab: React.FC = () => {
                           key={group.id}
                           group={group}
                           selectedGroup={selectedGroup}
-                          onSelect={(groupId) => setSelectedGroup(selectedGroup === groupId ? '' : groupId)}
+                          onSelect={updateSelectedGroup}
                           onTogglePin={handleTogglePinGroup}
                           onEdit={handleEditGroup}
                           onDelete={handleDeleteGroup}
@@ -1036,7 +1070,7 @@ const NewTab: React.FC = () => {
                 {selectedGroup && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 text-sm rounded-full">
                     分组: {getCurrentGroupName()}
-                    <button onClick={() => setSelectedGroup('')} className="hover:text-purple-900">
+                    <button onClick={() => updateSelectedGroup('')} className="hover:text-purple-900">
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>

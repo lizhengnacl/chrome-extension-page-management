@@ -35,15 +35,19 @@ export interface Group {
   createdAt: number;
 }
 
+/** 用户设置 */
+export interface UserSettings {
+  lastSyncAt: number;
+  storageWarningShown: boolean;
+  lastSelectedGroupId: string;
+}
+
 /** 存储数据结构 */
 export interface StorageData {
   pages: Page[];
   groups: Group[];
   tags: TagNode[];
-  settings: {
-    lastSyncAt: number;
-    storageWarningShown: boolean;
-  };
+  settings: UserSettings;
 }
 
 /** Pop-up表单数据 */
