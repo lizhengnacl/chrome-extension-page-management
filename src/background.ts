@@ -19,8 +19,8 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete') {
     updateExtensionIcon(tab);
     
-    if (tab.url && tab.title) {
-      await updatePageInfoIfNeeded(tab.url, tab.title, tab.favIconUrl);
+    if (tab.url) {
+      await updatePageInfoIfNeeded(tab.url, tab.favIconUrl);
     }
   }
 });
@@ -46,7 +46,7 @@ function updateExtensionIcon(tab: chrome.tabs.Tab) {
   });
 }
 
-async function updatePageInfoIfNeeded(url: string, title: string, favIconUrl?: string) {
+async function updatePageInfoIfNeeded(url: string, favIconUrl?: string) {
   try {
     const pages = await pageStorage.getAll();
     const matchingPage = pages.find(p => p.url === url);
@@ -56,17 +56,13 @@ async function updatePageInfoIfNeeded(url: string, title: string, favIconUrl?: s
         id: matchingPage.id,
       };
       
-      if (title && title !== matchingPage.title) {
-        updates.title = title;
-      }
-      
       if (favIconUrl && favIconUrl !== matchingPage.favicon) {
         updates.favicon = favIconUrl;
       }
       
-      if (updates.title || updates.favicon) {
+      if (updates.favicon) {
         await pageStorage.batchUpdateInfo([updates]);
-        console.log('已自动更新页面信息:', url);
+        console.log('已自动更新页面图标:', url);
       }
     }
   } catch (error) {

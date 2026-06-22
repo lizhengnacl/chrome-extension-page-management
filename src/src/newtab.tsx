@@ -536,9 +536,15 @@ const NewTab: React.FC = () => {
     if (!editingPage) return;
 
     tagInputRef.current?.flushInput();
+    const title = editForm.title.trim();
+
+    if (!title) {
+      showToast('页面标题不能为空', 'error');
+      return;
+    }
 
     const result = await pageStorage.update(editingPage.id, {
-      title: editForm.title,
+      title,
       tags: editForm.tags,
       groups: editForm.groups,
     });

@@ -80,8 +80,9 @@ const Popup: React.FC = () => {
     
     const finalTags = tagInputRef.current?.getAllTags() || formData.tags;
     tagInputRef.current?.flushInput();
+    const title = formData.title.trim();
     
-    if (!formData.url || !formData.title) {
+    if (!formData.url || !title) {
       showToast('请填写完整信息', 'error');
       return;
     }
@@ -94,9 +95,9 @@ const Popup: React.FC = () => {
       if (existingPage) {
         // 检查是否有变更
         const hasChanges = 
-          existingPage.title !== formData.title ||
-          JSON.stringify(existingPage.tags.sort()) !== JSON.stringify(finalTags.sort()) ||
-          JSON.stringify(existingPage.groups.sort()) !== JSON.stringify(groups.sort());
+          existingPage.title !== title ||
+          JSON.stringify([...existingPage.tags].sort()) !== JSON.stringify([...finalTags].sort()) ||
+          JSON.stringify([...existingPage.groups].sort()) !== JSON.stringify([...groups].sort());
 
         if (!hasChanges) {
           // 没有变更，直接关闭 popup
@@ -106,7 +107,7 @@ const Popup: React.FC = () => {
 
         // 有变更，更新页面
         const result = await pageStorage.update(existingPage.id, {
-          title: formData.title,
+          title,
           tags: finalTags,
           groups,
         });
@@ -121,7 +122,7 @@ const Popup: React.FC = () => {
         // 页面不存在，新增
         const result = await pageStorage.add({
           url: formData.url,
-          title: formData.title,
+          title,
           favicon: formData.favicon,
           tags: finalTags,
           groups,

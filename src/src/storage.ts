@@ -362,6 +362,10 @@ export const pageStorage = {
 
   async add(page: Omit<Page, 'id' | 'order' | 'createdAt' | 'updatedAt'>): Promise<Page | null> {
     const data = await getStorageData();
+    const title = page.title.trim();
+    if (!title) {
+      return null;
+    }
     
     const isDuplicate = await this.checkDuplicate(page.url);
     
@@ -372,6 +376,7 @@ export const pageStorage = {
     const maxOrder = data.pages.length > 0 ? Math.max(...data.pages.map(p => p.order || 0), -1) : -1;
     const newPage: Page = {
       ...page,
+      title,
       id: generateId(),
       order: maxOrder + 1,
       createdAt: Date.now(),
@@ -387,9 +392,18 @@ export const pageStorage = {
     const data = await getStorageData();
     const index = data.pages.findIndex(p => p.id === id);
     if (index === -1) return { success: false };
+    const sanitizedUpdates = { ...updates };
 
-    if (updates.url) {
-      const isDuplicate = await this.checkDuplicate(updates.url, id);
+    if (sanitizedUpdates.title !== undefined) {
+      const title = sanitizedUpdates.title.trim();
+      if (!title) {
+        return { success: false };
+      }
+      sanitizedUpdates.title = title;
+    }
+
+    if (sanitizedUpdates.url) {
+      const isDuplicate = await this.checkDuplicate(sanitizedUpdates.url, id);
       if (isDuplicate) {
         return { success: false, isDuplicate: true };
       }
@@ -397,7 +411,7 @@ export const pageStorage = {
 
     data.pages[index] = {
       ...data.pages[index],
-      ...updates,
+      ...sanitizedUpdates,
       updatedAt: Date.now(),
     };
     const success = await setStorageData(data);
@@ -461,7 +475,8 @@ export const pageStorage = {
     updates.forEach(update => {
       const page = data.pages.find(p => p.id === update.id);
       if (page) {
-        if (update.title) page.title = update.title;
+        const title = update.title?.trim();
+        if (title) page.title = title;
         if (update.favicon) page.favicon = update.favicon;
         page.updatedAt = Date.now();
       }
