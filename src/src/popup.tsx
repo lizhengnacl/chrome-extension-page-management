@@ -16,6 +16,7 @@ import type { Page } from './types';
 import IconSvg from '../icons/icon.svg';
 
 const Popup: React.FC = () => {
+  const formId = 'quick-add-page-form';
   const [isLoading, setIsLoading] = useState(false);
   const [isSpecial, setIsSpecial] = useState(false);
   const [shortcutSet, setShortcutSet] = useState(true);
@@ -164,11 +165,25 @@ const Popup: React.FC = () => {
     <div className="w-[400px] max-h-[600px] overflow-y-auto">
       {/* 头部 */}
       <div className="px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
-            <img src={IconSvg} className="w-10 h-10" alt="Logo" />
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
+              <img src={IconSvg} className="w-10 h-10" alt="Logo" />
+            </div>
+            <h1 className="text-lg font-semibold text-white truncate">页集</h1>
           </div>
-          <h1 className="text-lg font-semibold text-white">页集</h1>
+          <Button
+            type="submit"
+            form={formId}
+            size="sm"
+            loading={isLoading}
+            className="flex-shrink-0 !bg-white !text-blue-700 hover:!bg-blue-50 !border-white/70"
+          >
+            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            保存
+          </Button>
         </div>
       </div>
 
@@ -178,7 +193,7 @@ const Popup: React.FC = () => {
       </div>
 
       {/* 表单 */}
-      <form onSubmit={handleSubmit} className="p-4 space-y-4">
+      <form id={formId} onSubmit={handleSubmit} className="p-4 space-y-4">
         {/* URL */}
         <Input
           label="页面链接"
@@ -196,6 +211,17 @@ const Popup: React.FC = () => {
           placeholder="页面标题"
         />
 
+        {/* 分组 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            所属分组
+          </label>
+          <GroupSelector
+            value={formData.groups}
+            onChange={groups => setFormData(prev => ({ ...prev, groups }))}
+          />
+        </div>
+
         {/* 标签 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -208,28 +234,6 @@ const Popup: React.FC = () => {
           />
         </div>
 
-        {/* 分组 */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            所属分组
-          </label>
-          <GroupSelector
-            value={formData.groups}
-            onChange={groups => setFormData(prev => ({ ...prev, groups }))}
-          />
-        </div>
-
-        {/* 提交按钮 */}
-        <Button
-          type="submit"
-          loading={isLoading}
-          className="w-full"
-        >
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-          保存收藏
-        </Button>
       </form>
 
       {/* 提示信息 */}
