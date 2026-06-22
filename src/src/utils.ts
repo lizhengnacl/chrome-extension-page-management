@@ -56,6 +56,77 @@ export function sortByTitle<T extends { title: string }>(items: T[]): T[] {
   );
 }
 
+/** 规范化页面标题，避免保存不可见空白和多余换行 */
+export function normalizePageTitle(title?: string): string {
+  return (title || '').replace(/\s+/g, ' ').trim();
+}
+
+const GENERIC_PAGE_TITLES = new Set([
+  'untitled',
+  'no title',
+  'loading',
+  'new tab',
+  'about:blank',
+  '无标题',
+  '加载中',
+  '新标签页',
+  '飞书云文档',
+  '飞书文档',
+  'lark docs',
+  'lark doc',
+  'feishu docs',
+  'feishu doc',
+]);
+
+function getUrlTitleCandidates(url?: string): string[] {
+  if (!url) return [];
+
+  try {
+    const urlObj = new URL(url);
+    const host = urlObj.hostname.toLowerCase();
+    const path = urlObj.pathname === '/' ? '' : urlObj.pathname;
+    return [
+      urlObj.href.toLowerCase(),
+      host,
+      `${host}${path}`.toLowerCase(),
+    ];
+  } catch {
+    return [url.toLowerCase()];
+  }
+}
+
+/** 判断标题是否过于泛化，不能作为自动覆盖依据 */
+export function isLowQualityPageTitle(title?: string, url?: string): boolean {
+  const normalized = normalizePageTitle(title);
+  if (!normalized || normalized.length <= 1) return true;
+
+  const lowerTitle = normalized.toLowerCase();
+  if (GENERIC_PAGE_TITLES.has(lowerTitle)) return true;
+
+  if (lowerTitle.startsWith('http://') || lowerTitle.startsWith('https://')) {
+    return true;
+  }
+
+  return getUrlTitleCandidates(url).some(candidate => lowerTitle === candidate);
+}
+
+/**
+ * 自动标题只允许修复低质量标题，不能覆盖用户已确认或已经可用的标题。
+ */
+export function shouldUseAutoPageTitle(
+  currentTitle: string,
+  nextTitle: string | undefined,
+  url: string,
+  titleSource?: 'captured' | 'manual' | 'auto'
+): boolean {
+  const normalizedNextTitle = normalizePageTitle(nextTitle);
+  if (titleSource === 'manual') return false;
+  if (isLowQualityPageTitle(normalizedNextTitle, url)) return false;
+  if (!isLowQualityPageTitle(currentTitle, url)) return false;
+
+  return normalizePageTitle(currentTitle) !== normalizedNextTitle;
+}
+
 /** 解析多级标签路径 */
 export function parseTagPath(path: string): string[] {
   return path.split('/').filter(Boolean);

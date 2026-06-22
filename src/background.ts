@@ -18,10 +18,10 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete') {
     updateExtensionIcon(tab);
-    
-    if (tab.url) {
-      await updatePageInfoIfNeeded(tab.url, tab.favIconUrl);
-    }
+  }
+
+  if (tab.url && (changeInfo.status === 'complete' || changeInfo.title)) {
+    await updatePageInfoIfNeeded(tab.url, changeInfo.title || tab.title, tab.favIconUrl);
   }
 });
 
@@ -46,23 +46,26 @@ function updateExtensionIcon(tab: chrome.tabs.Tab) {
   });
 }
 
-async function updatePageInfoIfNeeded(url: string, favIconUrl?: string) {
+async function updatePageInfoIfNeeded(url: string, title?: string, favIconUrl?: string) {
   try {
-    const pages = await pageStorage.getAll();
-    const matchingPage = pages.find(p => p.url === url);
+    const matchingPage = await pageStorage.getByUrl(url);
     
     if (matchingPage) {
       const updates: { id: string; title?: string; favicon?: string } = {
         id: matchingPage.id,
       };
+
+      if (title) {
+        updates.title = title;
+      }
       
       if (favIconUrl && favIconUrl !== matchingPage.favicon) {
         updates.favicon = favIconUrl;
       }
       
-      if (updates.favicon) {
+      if (updates.title || updates.favicon) {
         await pageStorage.batchUpdateInfo([updates]);
-        console.log('已自动更新页面图标:', url);
+        console.log('已检查页面信息:', url);
       }
     }
   } catch (error) {

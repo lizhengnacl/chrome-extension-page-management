@@ -11,7 +11,7 @@ import { TagInput, type TagInputRef } from './components/TagInput';
 import { GroupSelector } from './components/GroupSelector';
 import { StorageWarning } from './components/StorageWarning';
 import { pageStorage, groupStorage, getStorageUsage } from './storage';
-import { getCurrentTab, isSpecialPage, getFaviconUrl } from './utils';
+import { getCurrentTab, isSpecialPage, getFaviconUrl, normalizePageTitle } from './utils';
 import type { Page } from './types';
 import IconSvg from '../icons/icon.svg';
 
@@ -21,6 +21,7 @@ const Popup: React.FC = () => {
   const [isSpecial, setIsSpecial] = useState(false);
   const [shortcutSet, setShortcutSet] = useState(true);
   const [existingPage, setExistingPage] = useState<Page | null>(null);
+  const [titleEdited, setTitleEdited] = useState(false);
   const [formData, setFormData] = useState({
     url: '',
     title: '',
@@ -62,6 +63,7 @@ const Popup: React.FC = () => {
             tags: existing.tags,
             groups: existing.groups,
           });
+          setTitleEdited(false);
         } else {
           setFormData(prev => ({
             ...prev,
@@ -69,6 +71,7 @@ const Popup: React.FC = () => {
             title: tab.title || '',
             favicon: tab.favIconUrl || getFaviconUrl(tab.url || ''),
           }));
+          setTitleEdited(false);
         }
       }
     }
@@ -80,7 +83,7 @@ const Popup: React.FC = () => {
     
     const finalTags = tagInputRef.current?.getAllTags() || formData.tags;
     tagInputRef.current?.flushInput();
-    const title = formData.title.trim();
+    const title = normalizePageTitle(formData.title);
     
     if (!formData.url || !title) {
       showToast('请填写完整信息', 'error');
@@ -108,6 +111,7 @@ const Popup: React.FC = () => {
         // 有变更，更新页面
         const result = await pageStorage.update(existingPage.id, {
           title,
+          ...(titleEdited && title !== existingPage.title ? { titleSource: 'manual' as const } : {}),
           tags: finalTags,
           groups,
         });
@@ -123,6 +127,7 @@ const Popup: React.FC = () => {
         const result = await pageStorage.add({
           url: formData.url,
           title,
+          titleSource: titleEdited ? 'manual' : 'captured',
           favicon: formData.favicon,
           tags: finalTags,
           groups,
@@ -208,7 +213,10 @@ const Popup: React.FC = () => {
         <Input
           label="页面标题"
           value={formData.title}
-          onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+          onChange={e => {
+            setTitleEdited(true);
+            setFormData(prev => ({ ...prev, title: e.target.value }));
+          }}
           placeholder="页面标题"
         />
 

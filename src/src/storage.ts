@@ -6,8 +6,8 @@
  * 优化写入操作，避免频繁调用 chrome.storage.sync.set
  */
 
-import type { Page, Group, TagNode, StorageData, StorageUsage, UserSettings } from './types';
-import { isSamePage } from './utils';
+import type { Page, Group, TagNode, StorageData, StorageUsage, UserSettings, PageTitleSource } from './types';
+import { isSamePage, normalizePageTitle, shouldUseAutoPageTitle } from './utils';
 
 const STORAGE_PREFIX = 'pageManager_';
 const PAGES_PER_CHUNK = 10; 
@@ -362,7 +362,7 @@ export const pageStorage = {
 
   async add(page: Omit<Page, 'id' | 'order' | 'createdAt' | 'updatedAt'>): Promise<Page | null> {
     const data = await getStorageData();
-    const title = page.title.trim();
+    const title = normalizePageTitle(page.title);
     if (!title) {
       return null;
     }
@@ -377,6 +377,8 @@ export const pageStorage = {
     const newPage: Page = {
       ...page,
       title,
+      titleSource: page.titleSource || 'captured',
+      titleUpdatedAt: Date.now(),
       id: generateId(),
       order: maxOrder + 1,
       createdAt: Date.now(),
@@ -392,14 +394,26 @@ export const pageStorage = {
     const data = await getStorageData();
     const index = data.pages.findIndex(p => p.id === id);
     if (index === -1) return { success: false };
+    const currentPage = data.pages[index];
     const sanitizedUpdates = { ...updates };
+    if (sanitizedUpdates.titleSource === undefined) {
+      delete sanitizedUpdates.titleSource;
+    }
+    if (sanitizedUpdates.titleUpdatedAt === undefined) {
+      delete sanitizedUpdates.titleUpdatedAt;
+    }
 
     if (sanitizedUpdates.title !== undefined) {
-      const title = sanitizedUpdates.title.trim();
+      const title = normalizePageTitle(sanitizedUpdates.title);
       if (!title) {
         return { success: false };
       }
       sanitizedUpdates.title = title;
+
+      if (title !== currentPage.title) {
+        sanitizedUpdates.titleSource = sanitizedUpdates.titleSource || 'manual';
+        sanitizedUpdates.titleUpdatedAt = Date.now();
+      }
     }
 
     if (sanitizedUpdates.url) {
@@ -469,18 +483,38 @@ export const pageStorage = {
     return data.pages.filter(p => p.tags.some(t => t === tagPath || t.indexOf(tagPath + '/') === 0));
   },
 
-  async batchUpdateInfo(updates: { id: string; title?: string; favicon?: string }[]): Promise<boolean> {
+  async batchUpdateInfo(updates: { id: string; title?: string; favicon?: string; titleSource?: PageTitleSource }[]): Promise<boolean> {
     const data = await getStorageData();
+    let hasChanges = false;
     
     updates.forEach(update => {
       const page = data.pages.find(p => p.id === update.id);
       if (page) {
-        const title = update.title?.trim();
-        if (title) page.title = title;
-        if (update.favicon) page.favicon = update.favicon;
-        page.updatedAt = Date.now();
+        const title = normalizePageTitle(update.title);
+        let pageChanged = false;
+
+        if (shouldUseAutoPageTitle(page.title, title, page.url, page.titleSource)) {
+          page.title = title;
+          page.titleSource = update.titleSource || 'auto';
+          page.titleUpdatedAt = Date.now();
+          pageChanged = true;
+        }
+
+        if (update.favicon && update.favicon !== page.favicon) {
+          page.favicon = update.favicon;
+          pageChanged = true;
+        }
+
+        if (pageChanged) {
+          page.updatedAt = Date.now();
+          hasChanges = true;
+        }
       }
     });
+
+    if (!hasChanges) {
+      return true;
+    }
 
     return setStorageData(data);
   },

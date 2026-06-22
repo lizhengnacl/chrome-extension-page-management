@@ -4,10 +4,14 @@
  */
 
 /** 页面数据结构 */
+export type PageTitleSource = 'captured' | 'manual' | 'auto';
+
 export interface Page {
   id: string;
   url: string;
   title: string;
+  titleSource?: PageTitleSource; // 标题来源：初次捕获、用户手动编辑或自动修复
+  titleUpdatedAt?: number;
   favicon: string;
   tags: string[]; // 多级标签路径数组，如 ["技术/AI", "工具"]
   groups: string[]; // 所属分组ID数组
