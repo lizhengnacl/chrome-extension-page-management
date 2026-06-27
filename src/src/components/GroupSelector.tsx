@@ -6,23 +6,28 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { groupStorage } from '../storage';
 import type { Group } from '../types';
+import { DropdownPortal } from './DropdownPortal';
 
 interface GroupSelectorProps {
   value: string[];
   onChange: (groupIds: string[]) => void;
   placeholder?: string;
+  dropdownMode?: 'floating' | 'inline';
 }
 
 export const GroupSelector: React.FC<GroupSelectorProps> = ({
   value,
   onChange,
   placeholder = '选择或搜索分组...',
+  dropdownMode = 'floating',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [groups, setGroups] = useState<Group[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // 加载分组列表
@@ -33,7 +38,12 @@ export const GroupSelector: React.FC<GroupSelectorProps> = ({
   // 点击外部关闭下拉框
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(target) &&
+        !dropdownRef.current?.contains(target)
+      ) {
         setIsOpen(false);
       }
     };
@@ -92,10 +102,81 @@ export const GroupSelector: React.FC<GroupSelectorProps> = ({
     onChange(value.filter(id => id !== groupId));
   };
 
+  const dropdownContent = (
+    <>
+      {/* 搜索框 */}
+      <div className="p-2 border-b border-gray-100">
+        <div className="relative">
+          <input
+            ref={searchInputRef}
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="搜索分组..."
+            className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+      </div>
+
+      {/* 分组列表 */}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {filteredGroups.length === 0 ? (
+          <div className="px-3 py-4 text-center text-sm text-gray-500">
+            暂无分组
+          </div>
+        ) : (
+          filteredGroups.map(group => (
+            <button
+              key={group.id}
+              type="button"
+              onClick={() => toggleGroup(group.id)}
+              className={`w-full flex items-center justify-between px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${
+                value.includes(group.id) ? 'bg-blue-50' : ''
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
+                {group.name}
+              </span>
+              {value.includes(group.id) && (
+                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
+          ))
+        )}
+      </div>
+
+      {/* 创建新分组 */}
+      {canCreateNew && (
+        <div className="p-2 border-t border-gray-100">
+          <button
+            type="button"
+            onClick={handleCreateGroup}
+            disabled={isCreating}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md transition-colors disabled:opacity-50"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            创建分组 "{searchQuery.trim()}"
+          </button>
+        </div>
+      )}
+    </>
+  );
+
   return (
     <div ref={containerRef} className="relative">
       {/* 触发按钮 */}
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="w-full min-h-[42px] flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
@@ -125,74 +206,24 @@ export const GroupSelector: React.FC<GroupSelectorProps> = ({
       </button>
 
       {/* 下拉框 */}
-      {isOpen && (
-        <div className="absolute z-50 w-full top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
-          {/* 搜索框 */}
-          <div className="p-2 border-b border-gray-100">
-            <div className="relative">
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="搜索分组..."
-                className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-          </div>
-
-          {/* 分组列表 */}
-          <div className="max-h-36 overflow-y-auto">
-            {filteredGroups.length === 0 ? (
-              <div className="px-3 py-4 text-center text-sm text-gray-500">
-                暂无分组
-              </div>
-            ) : (
-              filteredGroups.map(group => (
-                <button
-                  key={group.id}
-                  type="button"
-                  onClick={() => toggleGroup(group.id)}
-                  className={`w-full flex items-center justify-between px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${
-                    value.includes(group.id) ? 'bg-blue-50' : ''
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                    </svg>
-                    {group.name}
-                  </span>
-                  {value.includes(group.id) && (
-                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                </button>
-              ))
-            )}
-          </div>
-
-          {/* 创建新分组 */}
-          {canCreateNew && (
-            <div className="p-2 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={handleCreateGroup}
-                disabled={isCreating}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md transition-colors disabled:opacity-50"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                创建分组 "{searchQuery.trim()}"
-              </button>
-            </div>
-          )}
+      {isOpen && dropdownMode === 'inline' && (
+        <div
+          ref={dropdownRef}
+          className="mt-2 flex max-h-64 flex-col overflow-hidden bg-white border border-gray-200 rounded-lg shadow-lg"
+        >
+          {dropdownContent}
         </div>
+      )}
+
+      {isOpen && dropdownMode === 'floating' && (
+        <DropdownPortal
+          ref={dropdownRef}
+          anchorRef={triggerRef}
+          isOpen={isOpen}
+          className="flex flex-col overflow-hidden bg-white border border-gray-200 rounded-lg shadow-lg"
+        >
+          {dropdownContent}
+        </DropdownPortal>
       )}
 
 

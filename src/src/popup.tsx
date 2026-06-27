@@ -228,6 +228,7 @@ const Popup: React.FC = () => {
           <GroupSelector
             value={formData.groups}
             onChange={groups => setFormData(prev => ({ ...prev, groups }))}
+            dropdownMode="inline"
           />
         </div>
 
@@ -240,6 +241,7 @@ const Popup: React.FC = () => {
             ref={tagInputRef}
             value={formData.tags}
             onChange={tags => setFormData(prev => ({ ...prev, tags }))}
+            dropdownMode="inline"
           />
         </div>
 
