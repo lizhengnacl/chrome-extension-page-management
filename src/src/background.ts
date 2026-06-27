@@ -91,54 +91,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true;
   }
-  
-  if (request.action === 'autoUpdatePages') {
-    autoUpdatePagesInfo();
-    sendResponse({ success: true });
-  }
-});
-
-// 定期检查并更新页面信息（标题、favicon）
-async function autoUpdatePagesInfo() {
-  try {
-    const pages = await pageStorage.getAll();
-    const updates: { id: string; title?: string; favicon?: string }[] = [];
-
-    for (const page of pages.slice(0, 20)) { // 限制每次检查20个
-      try {
-        // 更新空的 favicon
-        if (!page.favicon || page.favicon.includes('undefined')) {
-          // 尝试从 URL 提取域名并获取 favicon
-          try {
-            const urlObj = new URL(page.url);
-            updates.push({
-              id: page.id,
-              favicon: `https://www.google.com/s2/favicons?domain=${encodeURIComponent(urlObj.hostname)}&sz=32`,
-            });
-          } catch {
-            // 忽略 URL 解析错误
-          }
-        }
-      } catch {
-        // 忽略单个页面的错误
-      }
-    }
-
-    if (updates.length > 0) {
-      await pageStorage.batchUpdateInfo(updates);
-      console.log(`已自动更新 ${updates.length} 个页面的信息`);
-    }
-  } catch (error) {
-    console.error('自动更新页面信息失败:', error);
-  }
-}
-
-// 定期执行自动更新（每6小时）
-chrome.alarms?.create('autoUpdate', { periodInMinutes: 360 });
-chrome.alarms?.onAlarm.addListener((alarm) => {
-  if (alarm.name === 'autoUpdate') {
-    autoUpdatePagesInfo();
-  }
 });
 
 // 导出供其他模块使用

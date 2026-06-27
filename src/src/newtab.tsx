@@ -399,8 +399,6 @@ const NewTab: React.FC = () => {
   // 初始化加载数据
   useEffect(() => {
     loadData();
-    // 后台自动更新页面信息
-    autoUpdatePages();
 
     const handleStorageChange = (changes: Record<string, chrome.storage.StorageChange>, areaName: string) => {
       if (areaName === 'sync' && hasPageManagerContentChanges(changes)) {
@@ -449,32 +447,6 @@ const NewTab: React.FC = () => {
       } else if (lastSelectedGroupId) {
         void settingsStorage.setLastSelectedGroupId('');
       }
-    }
-  };
-
-  // 自动更新页面标题和favicon
-  const autoUpdatePages = async () => {
-    const allPages = await pageStorage.getAll();
-    const updates: { id: string; title?: string; favicon?: string }[] = [];
-
-    for (const page of allPages.slice(0, 10)) { // 限制每次检查10个
-      try {
-        // 尝试获取最新信息（实际应用中可能需要通过后台脚本获取）
-        // 这里简化处理，只更新空favicon
-        if (!page.favicon) {
-          updates.push({
-            id: page.id,
-            favicon: `https://www.google.com/s2/favicons?domain=${encodeURIComponent(page.url)}&sz=32`,
-          });
-        }
-      } catch {
-        // 忽略错误
-      }
-    }
-
-    if (updates.length > 0) {
-      await pageStorage.batchUpdateInfo(updates);
-      loadData();
     }
   };
 

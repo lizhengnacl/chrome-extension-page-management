@@ -80,48 +80,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true;
   }
-  
-  if (request.action === 'autoUpdatePages') {
-    autoUpdatePagesInfo();
-    sendResponse({ success: true });
-  }
-});
-
-async function autoUpdatePagesInfo() {
-  try {
-    const pages = await pageStorage.getAll();
-    const updates: { id: string; title?: string; favicon?: string }[] = [];
-
-    for (const page of pages.slice(0, 20)) {
-      try {
-        if (!page.favicon || page.favicon.includes('undefined')) {
-          try {
-            const urlObj = new URL(page.url);
-            updates.push({
-              id: page.id,
-              favicon: `https://www.google.com/s2/favicons?domain=${encodeURIComponent(urlObj.hostname)}&sz=32`,
-            });
-          } catch {
-          }
-        }
-      } catch {
-      }
-    }
-
-    if (updates.length > 0) {
-      await pageStorage.batchUpdateInfo(updates);
-      console.log(`已自动更新 ${updates.length} 个页面的信息`);
-    }
-  } catch (error) {
-    console.error('自动更新页面信息失败:', error);
-  }
-}
-
-chrome.alarms?.create('autoUpdate', { periodInMinutes: 360 });
-chrome.alarms?.onAlarm.addListener((alarm) => {
-  if (alarm.name === 'autoUpdate') {
-    autoUpdatePagesInfo();
-  }
 });
 
 export {};

@@ -149,9 +149,7 @@ export async function getCurrentTab(): Promise<chrome.tabs.Tab | null> {
 
 /** 获取favicon URL */
 export function getFaviconUrl(url: string): string {
-  if (url.startsWith('http')) {
-    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(url)}&sz=32`;
-  }
+  void url;
   return '';
 }
 

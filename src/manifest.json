@@ -38,11 +38,5 @@
       },
       "description": "快速打开页集"
     }
-  },
-  "web_accessible_resources": [
-    {
-      "resources": ["icons/*"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  }
 }
