@@ -373,14 +373,14 @@ export const pageStorage = {
       return null;
     }
 
-    const maxOrder = data.pages.length > 0 ? Math.max(...data.pages.map(p => p.order || 0), -1) : -1;
+    const minOrder = data.pages.length > 0 ? Math.min(...data.pages.map(p => p.order || 0), 0) : 0;
     const newPage: Page = {
       ...page,
       title,
       titleSource: page.titleSource || 'captured',
       titleUpdatedAt: Date.now(),
       id: generateId(),
-      order: maxOrder + 1,
+      order: minOrder - 1,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
