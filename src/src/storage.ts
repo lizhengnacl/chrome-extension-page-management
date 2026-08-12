@@ -579,13 +579,13 @@ export const groupStorage = {
     }
     
     const data = await getStorageData();
-    const maxOrder = Math.max(...data.groups.map(g => g.order), 0);
+    const minOrder = Math.min(...data.groups.map(g => g.order), 0);
     
     const newGroup: Group = {
       id: generateId(),
       name,
       description,
-      order: maxOrder + 1,
+      order: minOrder - 1,
       pinned: false,
       createdAt: Date.now(),
     };
