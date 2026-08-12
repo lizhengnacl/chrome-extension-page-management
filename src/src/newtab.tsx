@@ -401,7 +401,7 @@ const NewTab: React.FC = () => {
     loadData();
 
     const handleStorageChange = (changes: Record<string, chrome.storage.StorageChange>, areaName: string) => {
-      if (areaName === 'sync' && hasPageManagerContentChanges(changes)) {
+      if ((areaName === 'local' || areaName === 'sync') && hasPageManagerContentChanges(changes)) {
         loadData();
       }
     };

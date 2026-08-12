@@ -1,18 +1,18 @@
 /**
  * 存储管理模块
- * 负责与chrome.storage.sync交互，管理数据的CRUD操作
+ * 负责与 chrome.storage.local / chrome.storage.sync 交互，管理数据的CRUD操作
  * 包含存储用量监控和容量警告功能
- * 采用分键存储策略避免 chrome.storage.sync 的单项配额限制
- * 优化写入操作，避免频繁调用 chrome.storage.sync.set
+ * 页面、分组、标签等大数据存放在 local；用户设置保留在 sync
+ * 采用分键存储策略避免单项数据过大
  */
 
 import type { Page, Group, TagNode, StorageData, StorageUsage, UserSettings, PageTitleSource } from './types';
 import { isSamePage, normalizePageTitle, shouldUseAutoPageTitle } from './utils';
 
 const STORAGE_PREFIX = 'pageManager_';
-const PAGES_PER_CHUNK = 10; 
-const SYNC_STORAGE_LIMIT = 100 * 1024; 
-const ITEM_SIZE_LIMIT = 6 * 1024; 
+const LOCAL_STORAGE_LIMIT = 10 * 1024 * 1024;
+const PAGE_CHUNK_SIZE_LIMIT = 256 * 1024;
+const LEGACY_DATA_KEY = STORAGE_PREFIX + 'data';
 
 const KEYS = {
   groups: STORAGE_PREFIX + 'groups',
@@ -63,7 +63,7 @@ function buildPageStorageUpdates(pages: Page[]): Record<string, any> {
     currentChunk.push(page);
     const chunkSize = getObjectSize(currentChunk);
     
-    if (chunkSize > ITEM_SIZE_LIMIT) {
+    if (chunkSize > PAGE_CHUNK_SIZE_LIMIT) {
       currentChunk.pop();
       if (currentChunk.length > 0) {
         updates[KEYS.pageChunk(chunkIndex)] = [...currentChunk];
@@ -80,79 +80,121 @@ function buildPageStorageUpdates(pages: Page[]): Record<string, any> {
   return updates;
 }
 
-function buildStorageUpdates(data: StorageData): Record<string, any> {
+function buildContentStorageUpdates(data: Pick<StorageData, 'pages' | 'groups' | 'tags'>): Record<string, any> {
   const updates: Record<string, any> = {
     [KEYS.groups]: data.groups,
     [KEYS.tags]: data.tags,
-    [KEYS.settings]: data.settings,
     ...buildPageStorageUpdates(data.pages),
   };
   
   return updates;
 }
 
-async function hasLegacyData(): Promise<boolean> {
-  try {
-    const result = await chrome.storage.sync.get('pageManager_data');
-    return !!result['pageManager_data'];
-  } catch {
-    return false;
-  }
+function getPageChunkKeys(storageData: Record<string, any>): string[] {
+  return Object.keys(storageData)
+    .filter(key => key.indexOf(PAGE_CHUNK_PREFIX) === 0)
+    .sort((a, b) => {
+      const indexA = Number.parseInt(a.substring(PAGE_CHUNK_PREFIX.length), 10);
+      const indexB = Number.parseInt(b.substring(PAGE_CHUNK_PREFIX.length), 10);
+      return indexA - indexB;
+    });
 }
 
-async function migrateLegacyData(): Promise<void> {
+function collectPagesFromStorage(storageData: Record<string, any>): Page[] {
+  const pages: Page[] = [];
+
+  for (const key of getPageChunkKeys(storageData)) {
+    const chunk = storageData[key] || [];
+    pages.push(...chunk);
+  }
+
+  return pages;
+}
+
+function hasContentStorage(storageData: Record<string, any>): boolean {
+  return (
+    KEYS.groups in storageData ||
+    KEYS.tags in storageData ||
+    KEYS.pageCount in storageData ||
+    getPageChunkKeys(storageData).length > 0
+  );
+}
+
+function getContentStorageKeys(storageData: Record<string, any>): string[] {
+  const keys = [KEYS.groups, KEYS.tags, KEYS.pageCount].filter(key => key in storageData);
+  return [...keys, ...getPageChunkKeys(storageData)];
+}
+
+let storageMigrationPromise: Promise<void> | null = null;
+
+async function ensureStorageMigration(): Promise<void> {
+  if (!storageMigrationPromise) {
+    storageMigrationPromise = migrateContentToLocalStorage();
+  }
+
+  return storageMigrationPromise;
+}
+
+async function migrateContentToLocalStorage(): Promise<void> {
   try {
-    const result = await chrome.storage.sync.get('pageManager_data');
-    const legacyData = result['pageManager_data'];
-    
-    if (!legacyData) return;
-    
-    console.log('正在迁移旧格式数据...');
-    
-    const updates = buildStorageUpdates({
-      pages: legacyData.pages || [],
-      groups: legacyData.groups || getDefaultGroups(),
-      tags: legacyData.tags || [],
-      settings: legacyData.settings || getDefaultSettings(),
-    });
-    
-    await chrome.storage.sync.set(updates);
-    await chrome.storage.sync.remove('pageManager_data');
-    
-    console.log('数据迁移完成');
+    const [localData, syncData] = await Promise.all([
+      chrome.storage.local.get(),
+      chrome.storage.sync.get(),
+    ]);
+    const legacyData = syncData[LEGACY_DATA_KEY];
+    const localHasContent = hasContentStorage(localData);
+    const syncHasContent = hasContentStorage(syncData) || !!legacyData;
+
+    const settings = {
+      ...getDefaultSettings(),
+      ...(legacyData?.settings || {}),
+      ...(syncData[KEYS.settings] || {}),
+    };
+    await chrome.storage.sync.set({ [KEYS.settings]: settings });
+
+    if (!localHasContent) {
+      const migratedContent = legacyData
+        ? {
+            pages: legacyData.pages || [],
+            groups: legacyData.groups || getDefaultGroups(),
+            tags: legacyData.tags || [],
+          }
+        : syncHasContent
+          ? {
+              pages: collectPagesFromStorage(syncData),
+              groups: syncData[KEYS.groups] || getDefaultGroups(),
+              tags: syncData[KEYS.tags] || [],
+            }
+          : {
+              pages: [],
+              groups: getDefaultGroups(),
+              tags: [],
+            };
+
+      await chrome.storage.local.set(buildContentStorageUpdates(migratedContent));
+    }
+
+    const syncContentKeys = getContentStorageKeys(syncData);
+    if (legacyData) {
+      syncContentKeys.push(LEGACY_DATA_KEY);
+    }
+
+    if (syncContentKeys.length > 0) {
+      await chrome.storage.sync.remove(syncContentKeys);
+    }
   } catch (error) {
-    console.error('数据迁移失败:', error);
+    console.error('迁移本地存储失败:', error);
   }
 }
 
 async function getPages(): Promise<Page[]> {
   try {
-    const result = await chrome.storage.sync.get(KEYS.pageCount);
+    const result = await chrome.storage.local.get(KEYS.pageCount);
     const pageCount = result[KEYS.pageCount] || 0;
     if (pageCount === 0) return [];
 
-    const allStorage = await chrome.storage.sync.get();
-    const pages: Page[] = [];
-    const pageChunkKeys: string[] = [];
-    
-    for (const key of Object.keys(allStorage)) {
-      if (key.indexOf(PAGE_CHUNK_PREFIX) === 0) {
-        pageChunkKeys.push(key);
-      }
-    }
-    
-    pageChunkKeys.sort((a, b) => {
-      const indexA = parseInt(a.split('_')[2]);
-      const indexB = parseInt(b.split('_')[2]);
-      return indexA - indexB;
-    });
-    
-    for (const key of pageChunkKeys) {
-      const chunk = allStorage[key] || [];
-      pages.push(...chunk);
-    }
-    
-    return pages;
+    const allStorage = await chrome.storage.local.get();
+    return collectPagesFromStorage(allStorage);
   } catch (error) {
     console.error('获取页面数据失败:', error);
     return [];
@@ -161,7 +203,7 @@ async function getPages(): Promise<Page[]> {
 
 async function getGroups(): Promise<Group[]> {
   try {
-    const result = await chrome.storage.sync.get(KEYS.groups);
+    const result = await chrome.storage.local.get(KEYS.groups);
     let groups = result[KEYS.groups] || getDefaultGroups();
     
     // 确保"常用地址"分组存在
@@ -193,7 +235,7 @@ async function getGroups(): Promise<Group[]> {
 
 async function getTags(): Promise<TagNode[]> {
   try {
-    const result = await chrome.storage.sync.get(KEYS.tags);
+    const result = await chrome.storage.local.get(KEYS.tags);
     return result[KEYS.tags] || [];
   } catch (error) {
     console.error('获取标签数据失败:', error);
@@ -216,9 +258,7 @@ async function getSettings(): Promise<UserSettings> {
 
 export async function getStorageData(): Promise<StorageData> {
   try {
-    if (await hasLegacyData()) {
-      await migrateLegacyData();
-    }
+    await ensureStorageMigration();
     
     const [pages, groups, tags, settings] = await Promise.all([
       getPages(),
@@ -240,7 +280,7 @@ export async function getStorageData(): Promise<StorageData> {
 }
 
 async function getOldPageChunkKeys(newChunkKeys: Set<string>): Promise<string[]> {
-  const allKeys = await chrome.storage.sync.get();
+  const allKeys = await chrome.storage.local.get();
   const oldKeys: string[] = [];
   
   for (const key of Object.keys(allKeys)) {
@@ -254,7 +294,9 @@ async function getOldPageChunkKeys(newChunkKeys: Set<string>): Promise<string[]>
 
 export async function setStorageData(data: StorageData): Promise<boolean> {
   try {
-    const updates = buildStorageUpdates(data);
+    await ensureStorageMigration();
+
+    const updates = buildContentStorageUpdates(data);
     const newChunkKeys = new Set<string>();
     
     for (const key of Object.keys(updates)) {
@@ -264,10 +306,13 @@ export async function setStorageData(data: StorageData): Promise<boolean> {
     }
     
     const oldKeys = await getOldPageChunkKeys(newChunkKeys);
-    await chrome.storage.sync.set(updates);
+    await Promise.all([
+      chrome.storage.local.set(updates),
+      chrome.storage.sync.set({ [KEYS.settings]: data.settings }),
+    ]);
     
     if (oldKeys.length > 0) {
-      await chrome.storage.sync.remove(oldKeys);
+      await chrome.storage.local.remove(oldKeys);
     }
     
     return true;
@@ -279,17 +324,22 @@ export async function setStorageData(data: StorageData): Promise<boolean> {
 
 export async function getStorageUsage(): Promise<StorageUsage> {
   try {
-    const data = await getStorageData();
-    const jsonString = JSON.stringify(data);
-    const used = new Blob([jsonString]).size;
+    await ensureStorageMigration();
+    const localData = await chrome.storage.local.get();
+    const contentKeys = getContentStorageKeys(localData);
+    const contentData = contentKeys.reduce<Record<string, any>>((result, key) => {
+      result[key] = localData[key];
+      return result;
+    }, {});
+    const used = getObjectSize(contentData);
     return {
       used,
-      total: SYNC_STORAGE_LIMIT,
-      percentage: (used / SYNC_STORAGE_LIMIT) * 100,
+      total: LOCAL_STORAGE_LIMIT,
+      percentage: (used / LOCAL_STORAGE_LIMIT) * 100,
     };
   } catch (error) {
     console.error('获取存储用量失败:', error);
-    return { used: 0, total: SYNC_STORAGE_LIMIT, percentage: 0 };
+    return { used: 0, total: LOCAL_STORAGE_LIMIT, percentage: 0 };
   }
 }
 
@@ -302,6 +352,7 @@ export function hasPageManagerContentChanges(changes: Record<string, chrome.stor
   return Object.keys(changes).some(key =>
     key === KEYS.groups ||
     key === KEYS.tags ||
+    key === KEYS.settings ||
     key === KEYS.pageCount ||
     key.indexOf(PAGE_CHUNK_PREFIX) === 0
   );

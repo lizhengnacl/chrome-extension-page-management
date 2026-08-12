@@ -1,6 +1,6 @@
 /**
  * 存储警告组件
- * 当存储用量超过80%时显示警告提示
+ * 当本机存储用量超过80%时显示警告提示
  */
 
 import React, { useEffect, useState } from 'react';
@@ -49,10 +49,10 @@ export const StorageWarning: React.FC<StorageWarningProps> = ({ className = '' }
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
         <div className="flex-1">
-          <h4 className="font-medium text-orange-800 text-sm">存储空间不足</h4>
+          <h4 className="font-medium text-orange-800 text-sm">本机存储空间不足</h4>
           <p className="text-xs text-orange-700 mt-1">
-            已使用 {usage ? usage.percentage.toFixed(1) : 0}% ({usage ? formatBytes(usage.used) : '0'} / {usage ? formatBytes(usage.total) : '100KB'}) 的同步存储空间。
-            请删除一些页面或导出备份，否则可能导致同步失败。
+            已使用 {usage ? usage.percentage.toFixed(1) : 0}% ({usage ? formatBytes(usage.used) : '0'} / {usage ? formatBytes(usage.total) : '10MB'}) 的本机存储空间。
+            请删除一些页面或导出备份，否则可能导致本机保存失败。
           </p>
         </div>
         <button
